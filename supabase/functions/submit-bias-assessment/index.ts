@@ -3,11 +3,11 @@
  * Schema LOCK v1.0 — 편향 진단 7문항 → bias_flags → archetype → DB INSERT
  *
  * 6-Step Pipeline:
- *   Step 1: 입력 검증
- *   Step 2: (PII 전처리 — 해당 없음)
+ *   Step 1: 입력 검증 + Rate Limit
+ *   Step 2: (PII 전처리 — 해당 없음, 텍스트 입력 없음)
  *   Step 3: (모델 호출 — 해당 없음, 순수 로직)
  *   Step 4: bias_flags + archetype + next_retest_at 산출
- *   Step 5: 로그 기록 (생략 — AI 호출 없음)
+ *   Step 5: 로그 기록 (ai_call_logs INSERT — 생략 불가)
  *   Step 6: DB INSERT (service_role)
  */
 
@@ -54,6 +54,45 @@ type TriggerSource =
 const VALID_TRIGGERS: TriggerSource[] = [
   'onboarding', 'scheduled', 'market_event', 'module_complete', 'user_request',
 ];
+
+const FUNCTION_NAME = 'submit-bias-assessment';
+const RATE_LIMIT_PER_MINUTE = 10;
+
+// ─── Step 1: Rate Limit (CLAUDE.md 6-Step Pipeline Step 1) ───
+
+async function checkRateLimit(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  userId: string,
+): Promise<boolean> {
+  const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString();
+  const { count, error } = await supabaseAdmin
+    .from('ai_call_logs')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('function_name', FUNCTION_NAME)
+    .gte('created_at', oneMinuteAgo);
+
+  if (error) {
+    console.error('Rate limit check failed:', error);
+    return false; // 실패 시 통과 허용 (가용성 우선)
+  }
+  return (count ?? 0) >= RATE_LIMIT_PER_MINUTE;
+}
+
+async function logRateLimitExceeded(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  userId: string,
+): Promise<void> {
+  try {
+    await supabaseAdmin.from('error_logs').insert({
+      user_id: userId,
+      type: 'rate_limit',
+      message: `Rate limit exceeded: ${FUNCTION_NAME} > ${RATE_LIMIT_PER_MINUTE}/min`,
+    });
+  } catch (e) {
+    console.error('Error log insert failed:', e);
+  }
+}
 
 // ─── Step 1: 입력 검증 ───
 
@@ -198,6 +237,16 @@ serve(async (req: Request) => {
       });
     }
 
+    // Step 1: Rate Limit 체크
+    const rateLimited = await checkRateLimit(supabaseAdmin, user.id);
+    if (rateLimited) {
+      await logRateLimitExceeded(supabaseAdmin, user.id);
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     // Step 1: 입력 검증
     const body = await req.json();
     const answers = validateAnswers(body.answers);
@@ -209,6 +258,22 @@ serve(async (req: Request) => {
     const archetype = determineArchetype(biasFlags);
     const diagnosedAt = new Date();
     const nextRetestAt = calculateRetestDates(diagnosedAt);
+
+    // Step 5: 로그 기록 (생략 불가 — CLAUDE.md 6-Step Pipeline)
+    try {
+      await supabaseAdmin.from('ai_call_logs').insert({
+        user_id: user.id,
+        function_name: FUNCTION_NAME,
+        model: 'none',           // AI 호출 없음
+        input_tokens: 0,
+        output_tokens: 0,
+        estimated_cost_usd: 0,
+        created_at: new Date().toISOString(),
+      });
+    } catch (logError) {
+      console.error('ai_call_logs insert failed:', logError);
+      // 비치명적 — 메인 플로우 차단 금지
+    }
 
     // Step 6: DB INSERT (service_role)
     const { data: assessment, error: insertError } = await supabaseAdmin

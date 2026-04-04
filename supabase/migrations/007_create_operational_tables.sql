@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS public.ai_call_logs (
   id                uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id           uuid        REFERENCES public.users(id) ON DELETE SET NULL,
   function_name     text        NOT NULL,
-  model             text        NOT NULL,
+  model             text        NOT NULL DEFAULT 'none',
   input_tokens      int         NOT NULL DEFAULT 0,
   output_tokens     int         NOT NULL DEFAULT 0,
   estimated_cost_usd numeric(8,6) NOT NULL DEFAULT 0,
@@ -56,9 +56,11 @@ CREATE POLICY "Service role only"
   USING (auth.role() = 'service_role');
 
 -- 초기 Feature Flags 삽입 (모두 OFF)
+-- CLAUDE.md Lock 2 준거: 아래 4종은 Jerry 서면 승인 후 수동 ON만 허용.
+-- 배포 시 자동 활성화 절대 금지.
 INSERT INTO public.feature_flags (key, enabled, description) VALUES
   ('coaching_ai', false, 'AI 코칭 문구 생성 활성화'),
-  ('fomo_alerts', false, 'FOMO 경보 시스템 활성화'),
+  ('fomo_alert', false, 'FOMO 경보 시스템 활성화'),
   ('subscription', false, 'RevenueCat 구독 결제 활성화'),
-  ('reassessment_trigger', false, '편향 재진단 트리거 활성화')
+  ('retrigger_assessment', false, '편향 재진단 트리거 활성화')
 ON CONFLICT (key) DO NOTHING;
