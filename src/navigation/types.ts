@@ -17,8 +17,9 @@ export type OnboardingStackParamList = {
   };
 };
 
-export type MainTabParamList = {
+export type MainStackParamList = {
   Home: undefined;
-  Journal: undefined;
-  Settings: undefined;
+  JournalCreate: undefined;
+  JournalView: { date?: string };
+  PrincipleManage: undefined;
 };

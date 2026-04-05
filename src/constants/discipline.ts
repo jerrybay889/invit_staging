@@ -28,3 +28,19 @@ export const DISCIPLINE_LABELS = {
 export function calculateEmotionScore(emotionCheckin: number): number {
   return (1 - Math.abs(emotionCheckin - 3) / 2) * 100;
 }
+
+/** 점수 범위에 따른 색상 반환 */
+export function getDisciplineColor(score: number): string {
+  if (score >= 90) return DISCIPLINE_LABELS.MASTER.color;
+  if (score >= 70) return DISCIPLINE_LABELS.HIGH.color;
+  if (score >= 40) return DISCIPLINE_LABELS.MEDIUM.color;
+  return DISCIPLINE_LABELS.LOW.color;
+}
+
+/** 점수 범위에 따른 메시지 반환 */
+export function getDisciplineMessage(score: number): string {
+  if (score >= 90) return DISCIPLINE_LABELS.MASTER.message;
+  if (score >= 70) return DISCIPLINE_LABELS.HIGH.message;
+  if (score >= 40) return DISCIPLINE_LABELS.MEDIUM.message;
+  return DISCIPLINE_LABELS.LOW.message;
+}

@@ -29,6 +29,9 @@ import AssessmentResultScreen from './src/screens/onboarding/AssessmentResultScr
 
 // Main Screens
 import H01_Home from './src/screens/H01_Home';
+import J01_JournalCreate from './src/screens/J01_JournalCreate';
+import J02_JournalView from './src/screens/J02_JournalView';
+import P01_PrincipleManage from './src/screens/P01_PrincipleManage';
 
 const AuthStack = createNativeStackNavigator();
 const OnboardingStack = createNativeStackNavigator();
@@ -58,6 +61,21 @@ function MainNavigator() {
   return (
     <MainStack.Navigator screenOptions={{ headerShown: false }}>
       <MainStack.Screen name="Home" component={H01_Home} />
+      <MainStack.Screen
+        name="JournalCreate"
+        component={J01_JournalCreate}
+        options={{ headerShown: true, title: '일지 작성', headerBackTitle: '홈' }}
+      />
+      <MainStack.Screen
+        name="JournalView"
+        component={J02_JournalView}
+        options={{ headerShown: true, title: '일지 확인', headerBackTitle: '홈' }}
+      />
+      <MainStack.Screen
+        name="PrincipleManage"
+        component={P01_PrincipleManage}
+        options={{ headerShown: true, title: '원칙 관리', headerBackTitle: '홈' }}
+      />
     </MainStack.Navigator>
   );
 }
