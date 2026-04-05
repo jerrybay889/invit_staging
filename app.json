@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "invit-temp",
-    "slug": "invit-temp",
+    "name": "INVIT",
+    "slug": "invit",
+    "scheme": "invit",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,9 +14,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "kr.invit.app"
     },
     "android": {
+      "package": "kr.invit.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

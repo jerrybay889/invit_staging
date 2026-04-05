@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "notion": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-notion"],
+      "env": {
+        "NOTION_API_KEY": "${NOTION_API_KEY}"
+      },
+      "description": "Notion API — INVIT Main Dashboard SSOT + 모든 문서 조회/편집"
+    },
+    "github": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "description": "GitHub API — invit-staging 저장소 PR/Issue 관리"
+    },
+    "supabase": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@supabase-ai/mcp-server"],
+      "env": {
+        "SUPABASE_URL": "https://txomdwlottxbfbdixcye.supabase.co",
+        "SUPABASE_ANON_KEY": "${SUPABASE_ANON_KEY}"
+      },
+      "description": "Supabase — 테이블 스키마 조회 + RLS 정책 확인",
+      "disabled": true
+    }
+  }
+}
