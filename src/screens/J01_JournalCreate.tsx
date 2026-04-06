@@ -140,8 +140,8 @@ export default function J01_JournalCreate() {
         // 비치명적 — 코칭 없어도 홈 이동
       }
 
-      // Step 4: 홈으로 이동 (discipline_score 갱신 트리거)
-      navigation.navigate('Home');
+      // Step 4: 탭으로 복귀 (discipline_score 갱신 트리거)
+      navigation.goBack();
     } catch (error) {
       Alert.alert('저장 실패', '일지를 저장하지 못했습니다. 다시 시도해주세요.');
       console.error('Journal save failed:', error);
@@ -150,12 +150,25 @@ export default function J01_JournalCreate() {
     }
   };
 
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long'
+  });
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+
+        {/* 날짜 헤더 */}
+        <View style={styles.dateHeader}>
+          <Text style={styles.dateText}>{dateStr}</Text>
+        </View>
 
         {/* 감정 체크인 (필수) */}
         <View style={styles.section}>
@@ -331,6 +344,17 @@ const styles = StyleSheet.create({
   },
   scroll: {
     padding: 16,
+  },
+  dateHeader: {
+    marginBottom: 20,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  dateText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.textSecondary,
   },
   section: {
     marginBottom: 24,

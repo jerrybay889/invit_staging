@@ -31,6 +31,7 @@ export default function H01_Home() {
   const [disciplineLog, setDisciplineLog] = useState<DisciplineLog | null>(null);
   const [coachingCard, setCoachingCard] = useState<CoachingCard | null>(null);
   const [hasJournal, setHasJournal] = useState(false);
+  const [recentJournals, setRecentJournals] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
@@ -38,12 +39,13 @@ export default function H01_Home() {
   const fetchData = useCallback(async () => {
     if (!authUser) return;
 
-    const [profileRes, principlesRes, disciplineRes, coachingRes, journalRes] = await Promise.all([
+    const [profileRes, principlesRes, disciplineRes, coachingRes, journalRes, recentRes] = await Promise.all([
       supabase.from('users').select('*').eq('id', authUser.id).single(),
       supabase.from('principles').select('*').eq('user_id', authUser.id).eq('is_active', true).order('sort_order'),
       supabase.from('discipline_logs').select('*').eq('user_id', authUser.id).eq('log_date', today).single(),
       supabase.from('coaching_cards').select('*').eq('user_id', authUser.id).eq('card_date', today).single(),
       supabase.from('investment_journals').select('id').eq('user_id', authUser.id).eq('journal_date', today).single(),
+      supabase.from('investment_journals').select('journal_date, emotion_checkin, trade_action, trade_rationale').eq('user_id', authUser.id).order('journal_date', { ascending: false }).limit(3),
     ]);
 
     if (profileRes.data) setProfile(profileRes.data as User);
@@ -51,6 +53,7 @@ export default function H01_Home() {
     setDisciplineLog(disciplineRes.data as DisciplineLog | null);
     setCoachingCard(coachingRes.data as CoachingCard | null);
     setHasJournal(!!journalRes.data);
+    setRecentJournals(recentRes.data ?? []);
   }, [authUser, today]);
 
   useEffect(() => {
@@ -121,6 +124,36 @@ export default function H01_Home() {
         <View style={styles.section}>
           <TodayPrincipleCard principles={principles} />
         </View>
+
+        {/* Recent Journals */}
+        {recentJournals.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>최근 일지</Text>
+            <View>
+              {recentJournals.slice(0, 3).map((j, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={styles.journalCard}
+                  onPress={() => navigation.navigate('JournalView', { date: j.journal_date })}
+                >
+                  <Text style={styles.journalEmoji}>
+                    {['😰', '😟', '😐', '😊', '😄'][Math.max(0, Math.min(4, (j.emotion_checkin ?? 3) - 1))] || '😐'}
+                  </Text>
+                  <View style={styles.journalContent}>
+                    <Text style={styles.journalDate}>
+                      {new Date(j.journal_date + 'T00:00:00').toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' })}
+                    </Text>
+                    <Text style={styles.journalMeta}>
+                      {j.trade_action === 'buy' ? '매수' : j.trade_action === 'sell' ? '매도' : '매매 없음'}
+                      {j.trade_rationale ? ' · 근거 있음' : ''}
+                    </Text>
+                  </View>
+                  <Text style={styles.chevron}>›</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Quick Actions */}
         <View style={styles.section}>
@@ -249,6 +282,38 @@ const styles = StyleSheet.create({
   viewJournalScore: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  // Recent Journals
+  journalCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: 8,
+  },
+  journalEmoji: {
+    fontSize: 24,
+    marginRight: 10,
+  },
+  journalContent: {
+    flex: 1,
+  },
+  journalDate: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+  journalMeta: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  chevron: {
+    fontSize: 18,
+    color: Colors.textMuted,
   },
   signOutButton: {
     alignItems: 'center', paddingVertical: 12, marginTop: 8,
