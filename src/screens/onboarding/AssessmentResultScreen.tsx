@@ -25,12 +25,14 @@ export default function AssessmentResultScreen({ navigation, route }: Props) {
   };
 
   const handleContinue = () => {
-    // 결과 확인 후 메인 앱으로 이동 — 네비게이션이 자동 전환
-    // (useBiasAssessment hook이 assessment 존재를 감지)
-    navigation.getParent()?.reset({
-      index: 0,
-      routes: [{ name: 'Main' }],
-    });
+    // 결과 확인 후 메인 앱으로 이동
+    // useBiasAssessment hook이 DB 변경을 감지하여 자동으로 MainNavigator로 전환
+    // (RootNavigator의 조건부 렌더링이 작동)
+    // 안전을 위해 1초 대기
+    setTimeout(() => {
+      // 이 시점에서 RootNavigator가 hasAssessment = true를 감지하고
+      // 자동으로 OnboardingStack에서 MainStack으로 전환됨
+    }, 1000);
   };
 
   return (

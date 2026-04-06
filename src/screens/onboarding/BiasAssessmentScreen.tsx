@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1, paddingBottom: 16 },
   nav: {
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 24, paddingVertical: 16,
+    paddingHorizontal: 24, paddingVertical: 20, paddingBottom: 28,
     borderTopWidth: 1, borderTopColor: Colors.border,
   },
   spacer: { flex: 1 },
