@@ -114,7 +114,7 @@ export default function J02_JournalView() {
       <View style={styles.center}>
         <Text style={styles.emptyTitle}>{date} 일지 없음</Text>
         <Text style={styles.emptyText}>이 날짜의 일지가 없습니다.</Text>
-        <TouchableOpacity style={styles.writeBtn} onPress={() => navigation.navigate('JournalCreate')}>
+        <TouchableOpacity style={styles.writeBtn} onPress={() => navigation.navigate('JournalCreate', {})}>
           <Text style={styles.writeBtnText}>일지 작성하기</Text>
         </TouchableOpacity>
       </View>
@@ -125,12 +125,18 @@ export default function J02_JournalView() {
   const principleChecks = journal.principle_checks ?? {};
   const checkedPrinciples = Object.entries(principleChecks).filter(([, v]) => v);
   const uncheckedPrinciples = Object.entries(principleChecks).filter(([, v]) => !v);
+  const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long',
+  });
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
       {/* 날짜 헤더 */}
-      <Text style={styles.dateHeader}>{date}</Text>
+      <Text style={styles.dateHeader}>{formattedDate}</Text>
 
       {/* 감정 */}
       <View style={styles.card}>
@@ -220,7 +226,7 @@ export default function J02_JournalView() {
       {/* 수정 버튼 */}
       <TouchableOpacity
         style={styles.editBtn}
-        onPress={() => navigation.navigate('JournalCreate')}
+        onPress={() => navigation.navigate('JournalCreate', { date })}
       >
         <Text style={styles.editBtnText}>일지 수정</Text>
       </TouchableOpacity>

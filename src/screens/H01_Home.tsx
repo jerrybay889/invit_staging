@@ -162,12 +162,12 @@ export default function H01_Home() {
             <ActionButton
               label="일지 작성"
               sublabel="오늘의 투자 기록"
-              onPress={() => navigation.navigate('JournalCreate')}
+              onPress={() => navigation.navigate('JournalCreate', {})}
             />
             <ActionButton
               label="원칙 관리"
               sublabel="투자 원칙 수정"
-              onPress={() => navigation.navigate('PrincipleManage')}
+              onPress={() => navigation.navigate('PrincipleManage', undefined)}
             />
           </View>
 

@@ -20,7 +20,7 @@ export type OnboardingStackParamList = {
 // Main 탭 내부에서 전체 스택으로 push 가능한 화면 목록
 export type MainStackParamList = {
   MainTabs: undefined;
-  JournalCreate: undefined;
+  JournalCreate: { date?: string };
   JournalView: { date?: string };
   PrincipleManage: undefined;
 };

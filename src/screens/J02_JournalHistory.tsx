@@ -68,7 +68,7 @@ export default function J02_JournalHistory() {
         <Text style={styles.title}>일지 기록</Text>
         <TouchableOpacity
           style={styles.writeBtn}
-          onPress={() => navigation.navigate('JournalCreate')}
+          onPress={() => navigation.navigate('JournalCreate', {})}
         >
           <Text style={styles.writeBtnText}>+ 오늘 일지</Text>
         </TouchableOpacity>
@@ -81,7 +81,7 @@ export default function J02_JournalHistory() {
           <Text style={styles.emptyDesc}>매일 일지를 작성하면 규율 점수가 올라갑니다</Text>
           <TouchableOpacity
             style={styles.emptyBtn}
-            onPress={() => navigation.navigate('JournalCreate')}
+            onPress={() => navigation.navigate('JournalCreate', {})}
           >
             <Text style={styles.emptyBtnText}>첫 일지 작성하기</Text>
           </TouchableOpacity>

@@ -26,15 +26,16 @@ import {
   Platform,
   SafeAreaView,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { Colors } from '../constants/colors';
-import type { Principle, TradeAction } from '../types/database';
+import type { Principle, TradeAction, InvestmentJournal } from '../types/database';
 import type { MainStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
+type RouteParams = RouteProp<MainStackParamList, 'JournalCreate'>;
 
 const EMOTION_OPTIONS = [
   { value: 1, label: '매우 불안', emoji: '😰' },
@@ -52,7 +53,9 @@ const TRADE_OPTIONS: { value: TradeAction; label: string }[] = [
 
 export default function J01_JournalCreate() {
   const navigation = useNavigation<Nav>();
+  const route = useRoute<RouteParams>();
   const { user } = useAuth();
+  const editDate = route.params?.date;
 
   // Form state
   const [emotionCheckin, setEmotionCheckin] = useState<number | null>(null);
@@ -83,9 +86,30 @@ export default function J01_JournalCreate() {
     setPrincipleChecks(initial);
   }, [user]);
 
+  const fetchExistingJournal = useCallback(async () => {
+    if (!user || !editDate) return;
+    const { data } = await supabase
+      .from('investment_journals')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('journal_date', editDate)
+      .single();
+    if (data) {
+      const j = data as InvestmentJournal;
+      setEmotionCheckin(j.emotion_checkin);
+      setTradeAction(j.trade_action);
+      setTicker(j.ticker ?? '');
+      setTradeRationale(j.trade_rationale ?? '');
+      setBiasCheck(j.bias_check ?? null);
+      setEmotionMemo(j.emotion_memo ?? '');
+      setPrincipleChecks(j.principle_checks ?? {});
+    }
+  }, [user, editDate]);
+
   useEffect(() => {
     fetchPrinciples();
-  }, [fetchPrinciples]);
+    fetchExistingJournal();
+  }, [fetchPrinciples, fetchExistingJournal]);
 
   const handleSave = async () => {
     // 로컬 validation — emotion_checkin 필수 (EF 409 사전 차단)
