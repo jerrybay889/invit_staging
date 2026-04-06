@@ -68,7 +68,7 @@ export default function BiasQuestionCard({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 24, paddingTop: 20 },
+  container: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 20 },
   progress: { marginBottom: 24 },
   progressText: { fontSize: 13, color: Colors.textMuted, marginBottom: 8, textAlign: 'right' },
   progressBar: {

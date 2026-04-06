@@ -6,7 +6,7 @@
 
 import React, { useState } from 'react';
 import {
-  View, TouchableOpacity, Text, StyleSheet, SafeAreaView, Alert, ActivityIndicator,
+  View, TouchableOpacity, Text, StyleSheet, SafeAreaView, Alert, ActivityIndicator, ScrollView,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BIAS_QUESTIONS } from '../../constants/bias-questions';
@@ -80,13 +80,15 @@ export default function BiasAssessmentScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <BiasQuestionCard
-        question={currentQuestion}
-        currentAnswer={currentAnswer}
-        onAnswer={handleAnswer}
-        questionIndex={currentIndex}
-        totalQuestions={BIAS_QUESTIONS.length}
-      />
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <BiasQuestionCard
+          question={currentQuestion}
+          currentAnswer={currentAnswer}
+          onAnswer={handleAnswer}
+          questionIndex={currentIndex}
+          totalQuestions={BIAS_QUESTIONS.length}
+        />
+      </ScrollView>
 
       <View style={styles.nav}>
         {currentIndex > 0 && (
@@ -115,6 +117,7 @@ export default function BiasAssessmentScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.surfaceBg },
+  scroll: { flexGrow: 1, paddingBottom: 16 },
   nav: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 24, paddingVertical: 16,
