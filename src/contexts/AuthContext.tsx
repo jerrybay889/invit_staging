@@ -2,11 +2,14 @@
  * AuthContext — Supabase Auth 상태 전역 관리
  * Lock 1: 클라이언트에서 DB 직접 쓰기 금지. Auth 조작만 허용.
  * Lock 3: service_role 미사용. anon key 전용.
+ * S2: RevenueCat 로그인/로그아웃 연동 추가
  */
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { loginRevenueCat, logoutRevenueCat } from '../lib/revenuecat';
+import { initPushNotifications } from '../lib/notifications';
 
 interface AuthContextValue {
   user: User | null;
@@ -39,6 +42,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // RevenueCat 사용자 연결 + Push 토큰 등록
+        if (session?.user) {
+          loginRevenueCat(session.user.id);
+          initPushNotifications(session.user.id);
+        }
       }
     );
 
@@ -56,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    await logoutRevenueCat();
     await supabase.auth.signOut();
   };
 

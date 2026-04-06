@@ -18,7 +18,7 @@
  *   + PrincipleManage (탭 위 풀스크린 — Home 퀵액션용)
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ActivityIndicator, View, Text, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -28,6 +28,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { useBiasAssessment } from './src/hooks/useBiasAssessment';
 import { Colors } from './src/constants/colors';
+import { configureRevenueCat } from './src/lib/revenuecat';
 
 // Auth Screens
 import S01_Welcome from './src/screens/S01_Welcome';
@@ -46,6 +47,7 @@ import J02_JournalHistory from './src/screens/J02_JournalHistory';
 import J02_JournalView from './src/screens/J02_JournalView';
 import P01_PrincipleManage from './src/screens/P01_PrincipleManage';
 import ST01_Settings from './src/screens/ST01_Settings';
+import SubscriptionScreen from './src/screens/SubscriptionScreen';
 
 import type { MainStackParamList, MainTabParamList } from './src/navigation/types';
 
@@ -154,6 +156,11 @@ function MainNavigator() {
         component={P01_PrincipleManage}
         options={{ headerShown: true, title: '원칙 관리', headerBackTitle: '뒤로' }}
       />
+      <MainStack.Screen
+        name="Subscription"
+        component={SubscriptionScreen}
+        options={{ headerShown: true, title: '구독 관리', headerBackTitle: '뒤로' }}
+      />
     </MainStack.Navigator>
   );
 }
@@ -184,6 +191,11 @@ function RootNavigator() {
 }
 
 export default function App() {
+  // RevenueCat SDK 초기화 — 앱 시작 시 1회 실행
+  useEffect(() => {
+    configureRevenueCat();
+  }, []);
+
   return (
     <SafeAreaProvider>
       <AuthProvider>

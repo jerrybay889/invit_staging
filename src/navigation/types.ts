@@ -23,6 +23,7 @@ export type MainStackParamList = {
   JournalCreate: { date?: string };
   JournalView: { date?: string };
   PrincipleManage: undefined;
+  Subscription: undefined;
 };
 
 // 5-Tab 네비게이터 탭 이름

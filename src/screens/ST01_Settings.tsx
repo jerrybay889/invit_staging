@@ -1,6 +1,7 @@
 /**
  * ST01_Settings — 설정/마이페이지 화면
  * Lock 3: users 테이블 SELECT only (profile 표시)
+ * S2: 구독 상태 실시간 표시 + SubscriptionScreen 연결
  */
 
 import React, { useEffect, useState } from 'react';
@@ -8,17 +9,25 @@ import {
   View, Text, StyleSheet, SafeAreaView, ScrollView,
   TouchableOpacity, Alert,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Colors } from '../constants/colors';
 import { ARCHETYPE_DEFINITIONS } from '../constants/archetype';
+import { useSubscription } from '../hooks/useSubscription';
 import type { User } from '../types/database';
+import type { MainStackParamList } from '../navigation/types';
 
-const APP_VERSION = '1.0.0 (S1)';
+type Nav = NativeStackNavigationProp<MainStackParamList>;
+
+const APP_VERSION = '1.0.0 (S2)';
 
 export default function ST01_Settings() {
+  const navigation = useNavigation<Nav>();
   const { user: authUser, signOut } = useAuth();
   const [profile, setProfile] = useState<User | null>(null);
+  const { featureEnabled, isPremium, isTrialActive, trialDaysRemaining, loading: subLoading } = useSubscription();
 
   useEffect(() => {
     if (!authUser) return;
@@ -40,6 +49,21 @@ export default function ST01_Settings() {
       { text: '로그아웃', style: 'destructive', onPress: signOut },
     ]);
   };
+
+  // 구독 상태 텍스트
+  const subscriptionStatusText = (() => {
+    if (!featureEnabled || subLoading) return '무료 체험';
+    if (isPremium && !isTrialActive) return '프리미엄 구독 중';
+    if (isTrialActive) return `무료 체험 ${trialDaysRemaining}일 남음`;
+    return '무료 (체험 종료)';
+  })();
+
+  const subscriptionStatusColor = (() => {
+    if (!featureEnabled || subLoading) return Colors.textMuted;
+    if (isPremium && !isTrialActive) return Colors.success;
+    if (isTrialActive) return Colors.primary;
+    return Colors.warning;
+  })();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -69,29 +93,34 @@ export default function ST01_Settings() {
           )}
         </View>
 
-        {/* 구독 관리 — S2 준비 중 */}
+        {/* 구독 관리 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>구독</Text>
           <View style={styles.row}>
             <Text style={styles.rowLabel}>현재 플랜</Text>
-            <Text style={styles.rowValue}>무료 체험</Text>
+            <Text style={[styles.rowValue, { color: subscriptionStatusColor, fontWeight: '600' }]}>
+              {subscriptionStatusText}
+            </Text>
           </View>
-          <View style={[styles.row, styles.rowDisabled]}>
-            <Text style={styles.rowLabelMuted}>구독 관리</Text>
-            <Text style={styles.rowBadge}>S2 준비 중</Text>
-          </View>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => navigation.navigate('Subscription', undefined)}
+          >
+            <Text style={styles.rowLabel}>구독 관리</Text>
+            <Text style={styles.rowChevron}>›</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* 알림 설정 — S2 준비 중 */}
+        {/* 알림 설정 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>알림</Text>
-          <View style={[styles.row, styles.rowDisabled]}>
-            <Text style={styles.rowLabelMuted}>일지 작성 리마인더</Text>
-            <Text style={styles.rowBadge}>S2 준비 중</Text>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>FOMO 경보 알림</Text>
+            <Text style={styles.rowValue}>활성화됨</Text>
           </View>
           <View style={[styles.row, styles.rowDisabled]}>
-            <Text style={styles.rowLabelMuted}>FOMO 경보 알림</Text>
-            <Text style={styles.rowBadge}>S2 준비 중</Text>
+            <Text style={styles.rowLabelMuted}>일지 작성 리마인더</Text>
+            <Text style={styles.rowBadge}>준비 중</Text>
           </View>
         </View>
 
@@ -100,7 +129,7 @@ export default function ST01_Settings() {
           <Text style={styles.sectionTitle}>편향 진단</Text>
           <View style={[styles.row, styles.rowDisabled]}>
             <Text style={styles.rowLabelMuted}>재진단 요청</Text>
-            <Text style={styles.rowBadge}>S2 준비 중</Text>
+            <Text style={styles.rowBadge}>준비 중</Text>
           </View>
         </View>
 
@@ -163,6 +192,7 @@ const styles = StyleSheet.create({
   rowLabel: { fontSize: 15, color: Colors.textPrimary },
   rowLabelMuted: { fontSize: 15, color: Colors.textSecondary },
   rowValue: { fontSize: 15, color: Colors.textMuted },
+  rowChevron: { fontSize: 20, color: Colors.textMuted },
   rowBadge: {
     fontSize: 11, fontWeight: '600', color: Colors.primary,
     backgroundColor: Colors.primary + '12',

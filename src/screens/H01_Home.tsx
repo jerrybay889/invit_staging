@@ -1,7 +1,8 @@
 /**
- * H01 — Home Dashboard (S1 업데이트)
- * Lock 3: SELECT only — discipline_logs, coaching_cards, principles, users
+ * H01 — Home Dashboard (S2 업데이트)
+ * Lock 3: SELECT only — discipline_logs, coaching_cards, principles, users, fomo_alerts
  * Lock 6: coaching_cards 표시 시 disclaimer 포함
+ * S2: FOMO 경보 배너 추가 (feature_flags.fomo_alert = true 시 표시)
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -17,6 +18,8 @@ import { getDisciplineColor, getDisciplineMessage } from '../constants/disciplin
 import { ARCHETYPE_DEFINITIONS } from '../constants/archetype';
 import DisciplineScoreBadge from '../components/DisciplineScoreBadge';
 import TodayPrincipleCard from '../components/TodayPrincipleCard';
+import FomoAlertBanner from '../components/FomoAlertBanner';
+import { useFomoAlert } from '../hooks/useFomoAlert';
 import type { User, Principle, DisciplineLog, CoachingCard } from '../types/database';
 import type { MainStackParamList } from '../navigation/types';
 
@@ -25,6 +28,7 @@ type Nav = NativeStackNavigationProp<MainStackParamList>;
 export default function H01_Home() {
   const navigation = useNavigation<Nav>();
   const { user: authUser } = useAuth();
+  const { alert: fomoAlert, dismissAlert } = useFomoAlert();
 
   const [profile, setProfile] = useState<User | null>(null);
   const [principles, setPrinciples] = useState<Principle[]>([]);
@@ -93,6 +97,11 @@ export default function H01_Home() {
             </Text>
           </View>
         </View>
+
+        {/* FOMO 경보 배너 (feature_flags.fomo_alert = true + 미확인 경보 있을 때) */}
+        {fomoAlert && (
+          <FomoAlertBanner alert={fomoAlert} onDismiss={dismissAlert} />
+        )}
 
         {/* Archetype Badge */}
         {archetypeDef && (
