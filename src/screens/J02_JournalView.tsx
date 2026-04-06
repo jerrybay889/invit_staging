@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
+  SafeAreaView,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -126,7 +127,8 @@ export default function J02_JournalView() {
   const uncheckedPrinciples = Object.entries(principleChecks).filter(([, v]) => !v);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scroll}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scroll}>
       {/* 날짜 헤더 */}
       <Text style={styles.dateHeader}>{date}</Text>
 
@@ -224,7 +226,8 @@ export default function J02_JournalView() {
       </TouchableOpacity>
 
       <View style={{ height: 32 }} />
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -235,6 +238,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     padding: 16,
+    paddingBottom: 60,
   },
   center: {
     flex: 1,

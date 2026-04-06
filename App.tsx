@@ -57,13 +57,15 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 // 분석 탭 준비 중 플레이스홀더
 function InsightsPlaceholder() {
   return (
-    <View style={styles.placeholder}>
-      <Text style={styles.placeholderEmoji}>📊</Text>
-      <Text style={styles.placeholderTitle}>분석 준비 중</Text>
-      <Text style={styles.placeholderDesc}>
-        편향 프로파일과 규율 트렌드 차트가{'\n'}다음 업데이트에서 제공됩니다
-      </Text>
-    </View>
+    <SafeAreaProvider>
+      <View style={styles.placeholder}>
+        <Text style={styles.placeholderEmoji}>📊</Text>
+        <Text style={styles.placeholderTitle}>분석 준비 중</Text>
+        <Text style={styles.placeholderDesc}>
+          편향 프로파일과 규율 트렌드 차트가{'\n'}다음 업데이트에서 제공됩니다
+        </Text>
+      </View>
+    </SafeAreaProvider>
   );
 }
 
