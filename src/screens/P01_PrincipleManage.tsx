@@ -176,6 +176,9 @@ export default function P01_PrincipleManage() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>원칙 관리</Text>
+      </View>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -311,6 +314,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.surfaceBg },
   scrollContent: { paddingBottom: 60 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.surfaceBg },
+  header: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, backgroundColor: Colors.surfaceBg,
+  },
+  title: { fontSize: 24, fontWeight: '700', color: Colors.textPrimary },
   // 직접 입력
   addSection: {
     flexDirection: 'row',

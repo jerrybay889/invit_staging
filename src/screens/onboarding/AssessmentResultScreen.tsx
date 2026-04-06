@@ -3,9 +3,9 @@
  * Lock 6: 면책 문구 필수 표시 (삭제·축약·위치 변경 금지)
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
@@ -23,12 +23,14 @@ export default function AssessmentResultScreen({ navigation, route }: Props) {
     archetype: string;
     biasFlags: Record<string, boolean>;
   };
+  const [loading, setLoading] = useState(false);
 
   const handleContinue = () => {
     // 결과 확인 후 메인 앱으로 이동
     // useBiasAssessment hook이 DB 변경을 감지하여 자동으로 MainNavigator로 전환
     // (RootNavigator의 조건부 렌더링이 작동)
     // 안전을 위해 1초 대기
+    setLoading(true);
     setTimeout(() => {
       // 이 시점에서 RootNavigator가 hasAssessment = true를 감지하고
       // 자동으로 OnboardingStack에서 MainStack으로 전환됨
@@ -56,8 +58,19 @@ export default function AssessmentResultScreen({ navigation, route }: Props) {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.primaryButton} onPress={handleContinue}>
-          <Text style={styles.primaryButtonText}>시작하기</Text>
+        <TouchableOpacity
+          style={[styles.primaryButton, loading && styles.primaryButtonDisabled]}
+          onPress={handleContinue}
+          disabled={loading}
+        >
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color={Colors.white} size="small" />
+              <Text style={[styles.primaryButtonText, { marginLeft: 8 }]}>준비 중...</Text>
+            </View>
+          ) : (
+            <Text style={styles.primaryButtonText}>시작하기</Text>
+          )}
         </TouchableOpacity>
 
         {/* Lock 6 — 면책 문구 (삭제·축약·위치 변경 금지) */}
@@ -85,8 +98,10 @@ const styles = StyleSheet.create({
   infoText: { fontSize: 14, color: Colors.textSecondary, lineHeight: 20 },
   primaryButton: {
     backgroundColor: Colors.primary, borderRadius: 12,
-    paddingVertical: 16, alignItems: 'center', marginTop: 24,
+    paddingVertical: 16, alignItems: 'center', justifyContent: 'center', marginTop: 24,
   },
+  primaryButtonDisabled: { opacity: 0.7 },
+  loadingContainer: { flexDirection: 'row', alignItems: 'center' },
   primaryButtonText: { color: Colors.white, fontSize: 16, fontWeight: '600' },
   disclaimerBox: {
     marginTop: 32, padding: 14,

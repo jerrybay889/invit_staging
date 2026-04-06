@@ -24,7 +24,7 @@ type Nav = NativeStackNavigationProp<MainStackParamList>;
 
 export default function H01_Home() {
   const navigation = useNavigation<Nav>();
-  const { user: authUser, signOut } = useAuth();
+  const { user: authUser } = useAuth();
 
   const [profile, setProfile] = useState<User | null>(null);
   const [principles, setPrinciples] = useState<Principle[]>([]);
@@ -109,13 +109,20 @@ export default function H01_Home() {
         />
 
         {/* 코칭 카드 (당일 있을 때만 표시) */}
-        {coachingCard && (
+        {coachingCard ? (
           <View style={styles.coachingCard}>
             <Text style={styles.coachingTitle}>오늘의 코칭</Text>
             <Text style={styles.coachingContent}>{coachingCard.content}</Text>
             <Text style={styles.coachingDisclaimer} numberOfLines={2}>
               {/* Lock 6: 면책 문구 표시 */}
               [중요 고지사항] 본 내용은 투자 행동 패턴의 자기 인식을 위한 교육적 도구로, 투자 권유가 아닙니다.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.coachingCard}>
+            <Text style={styles.coachingTitle}>오늘의 코칭</Text>
+            <Text style={styles.coachingEmptyText}>
+              오늘 일지를 작성하면 맞춤 코칭이 준비됩니다.
             </Text>
           </View>
         )}
@@ -186,11 +193,6 @@ export default function H01_Home() {
             </TouchableOpacity>
           )}
         </View>
-
-        {/* Sign Out */}
-        <TouchableOpacity style={styles.signOutButton} onPress={signOut}>
-          <Text style={styles.signOutText}>로그아웃</Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -249,6 +251,12 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: Colors.textMuted,
     lineHeight: 14,
+  },
+  coachingEmptyText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+    fontStyle: 'italic',
   },
   section: {},
   sectionTitle: {
@@ -315,8 +323,4 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: Colors.textMuted,
   },
-  signOutButton: {
-    alignItems: 'center', paddingVertical: 12, marginTop: 8,
-  },
-  signOutText: { fontSize: 14, color: Colors.textMuted },
 });

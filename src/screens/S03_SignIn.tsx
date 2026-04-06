@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  SafeAreaView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
+  SafeAreaView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../contexts/AuthContext';
@@ -44,6 +44,10 @@ export default function S03_SignIn({ navigation }: Props) {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
         <View style={styles.content}>
           <Text style={styles.title}>로그인</Text>
           <Text style={styles.subtitle}>계정에 접속합니다</Text>
@@ -102,6 +106,7 @@ export default function S03_SignIn({ navigation }: Props) {
             <Text style={styles.linkText}>계정이 없으신가요? 가입하기</Text>
           </TouchableOpacity>
         </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -110,7 +115,8 @@ export default function S03_SignIn({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.surfaceBg },
   flex: { flex: 1 },
-  content: { flex: 1, paddingHorizontal: 24, paddingTop: 40 },
+  scrollContent: { paddingHorizontal: 24, paddingTop: 40, paddingBottom: 40 },
+  content: { gap: 16 },
   title: { fontSize: 28, fontWeight: '700', color: Colors.textPrimary },
   subtitle: { fontSize: 15, color: Colors.textSecondary, marginTop: 8, marginBottom: 32 },
   form: { gap: 16 },
