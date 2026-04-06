@@ -35,18 +35,25 @@ export function useBiasAssessment() {
 
     fetchAssessment();
 
-    // 실시간 구독 (bias_assessments 테이블 변경 감지)
-    const subscription = supabase
-      .from('bias_assessments')
-      .on('*', (payload) => {
-        if (payload.new?.user_id === user.id) {
+    // 실시간 구독 (bias_assessments 테이블 변경 감지) — Supabase v2+ API
+    const channel = supabase
+      .channel(`bias_assessments:${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'bias_assessments',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
           setLatestAssessment(payload.new as BiasAssessment);
         }
-      })
+      )
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [user]);
 
