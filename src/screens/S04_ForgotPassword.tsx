@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  SafeAreaView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
+  SafeAreaView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../contexts/AuthContext';
@@ -42,7 +42,7 @@ export default function S04_ForgotPassword({ navigation }: Props) {
   if (sent) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
+        <View style={[styles.content, { justifyContent: 'center' }]}>
           <Text style={styles.title}>이메일 발송 완료</Text>
           <Text style={styles.description}>
             {email}으로 비밀번호 재설정 링크를 보냈습니다.{'\n'}
@@ -65,6 +65,11 @@ export default function S04_ForgotPassword({ navigation }: Props) {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 40, paddingBottom: 40 }}
+          keyboardShouldPersistTaps="handled"
+        >
         <View style={styles.content}>
           <Text style={styles.title}>비밀번호 재설정</Text>
           <Text style={styles.description}>
@@ -106,6 +111,7 @@ export default function S04_ForgotPassword({ navigation }: Props) {
             <Text style={styles.linkText}>뒤로 가기</Text>
           </TouchableOpacity>
         </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -114,7 +120,7 @@ export default function S04_ForgotPassword({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.surfaceBg },
   flex: { flex: 1 },
-  content: { flex: 1, paddingHorizontal: 24, paddingTop: 40 },
+  content: {},
   title: { fontSize: 28, fontWeight: '700', color: Colors.textPrimary },
   description: {
     fontSize: 15, color: Colors.textSecondary,

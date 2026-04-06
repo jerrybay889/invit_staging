@@ -80,7 +80,10 @@ export default function BiasAssessmentScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scroll}
+      >
         <BiasQuestionCard
           question={currentQuestion}
           currentAnswer={currentAnswer}

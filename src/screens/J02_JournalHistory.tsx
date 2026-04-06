@@ -88,6 +88,7 @@ export default function J02_JournalHistory() {
         </View>
       ) : (
         <FlatList
+          style={{ flex: 1 }}
           data={journals}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}

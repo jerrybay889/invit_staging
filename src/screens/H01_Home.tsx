@@ -76,6 +76,7 @@ export default function H01_Home() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
+        style={{ flex: 1 }}
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >

@@ -39,7 +39,10 @@ export default function AssessmentResultScreen({ navigation, route }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scroll}
+      >
         <Text style={styles.title}>진단 결과</Text>
         <Text style={styles.subtitle}>
           당신의 투자 행동 패턴을 분석했습니다

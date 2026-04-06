@@ -43,7 +43,10 @@ export default function ST01_Settings() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scroll}
+      >
         <Text style={styles.title}>설정</Text>
 
         {/* 프로필 카드 */}

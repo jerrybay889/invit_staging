@@ -58,7 +58,11 @@ export default function S02_SignUp({ navigation }: Props) {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+        >
           <Text style={styles.title}>회원가입</Text>
           <Text style={styles.subtitle}>투자 습관 개선을 시작합니다</Text>
 

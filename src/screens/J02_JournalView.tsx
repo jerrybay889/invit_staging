@@ -134,7 +134,10 @@ export default function J02_JournalView() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scroll}
+      >
       {/* 날짜 헤더 */}
       <Text style={styles.dateHeader}>{formattedDate}</Text>
 
