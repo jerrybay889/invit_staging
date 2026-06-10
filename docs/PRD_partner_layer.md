@@ -147,7 +147,7 @@ messages:   [{ role: 'user', content: coachingPrompt }]
 - 지시: "충돌하는 원칙 1~2개를 찾고, '왜 이것이 당신의 거래에 중요했을까?'를 묻는 코칭을 3문장으로 작성. 매수·매도 권유, 목표가, 수익 보장, 가격 예측 표현 절대 금지."
 
 **LOCK 처리 위치:**
-- **LOCK 5 (FALLBACK_MESSAGE):** ① Step 3 진입 전 월 비용 ≥ $5 시 fallback 반환 + `coaching_ai` flag 자동 OFF (기존 코드 유지) ② Claude API 호출 실패/타임아웃 시 fallback 반환 (신규 catch 경로). fallback 문구는 기존 상수 그대로 — 동적 생성 금지.
+- **LOCK 5 (FALLBACK_MESSAGE):** ① Step 3 진입 전 월 비용 ≥ $10 시 fallback 반환 + `coaching_ai` flag 자동 OFF (기존 코드 유지) ② Claude API 호출 실패/타임아웃 시 fallback 반환 (신규 catch 경로). fallback 문구는 기존 상수 그대로 — 동적 생성 금지.
 - **LOCK 6 (LEGAL_FILTER_KEYWORDS 7종):** Step 4 후처리 단계 — Claude 응답 텍스트에 기존 `legalPostFilter()` 적용. 감지 시: 응답 저장 금지 → `error_logs`에 `type:'legal_filter_violation'` 기록 → fallback 메시지로 교체. 클라이언트 필터링 금지 (Edge 전용).
 - **환경변수:** `ANTHROPIC_API_KEY` — Supabase Edge Function Secrets 전용. `.env.local`·클라이언트 번들 포함 금지. **현재 미등록 상태 (GAP-1) — Jerry 직접 등록 필요.**
 
@@ -239,7 +239,7 @@ messages:   [{ role: 'user', content: coachingPrompt }]
 - **Claude Haiku 예상 비용 (일지 100건/일 기준 추정):**
   - 호출당 입력 ~1,500 tokens (일지 요약 + 원칙 목록 + 지시) / 출력 ~200 tokens (max_tokens 제한)
   - claude-3-5-haiku 단가 기준(입력 $0.80/M, 출력 $4.00/M): 호출당 ≈ $0.002 → **일 100건 ≈ $0.20/일, 월 ≈ $6/월**
-  - Lock 5 월 $5 차단선과 충돌 가능 — 100건/일 도달 전에 차단선 상향 여부 Jerry 결정 필요 (8장). 초기(베타 ~10건/일)는 월 $0.6 수준으로 여유.
+  - Lock 5 월 $10 차단선 기준 (Jerry 승인 완료, 2026-06-11). 일지 100건/일 기준 월 ~$6 추정으로 여유 있음. 차단선 도달 전 경고선($5)에서 알림.
 - **응답 타임아웃:** Claude 호출에 10s 타임아웃 (AbortController) — 초과 시 Lock 5 fallback 경로. EF 전체 응답 목표 < 15s.
 - **Feature Flag (P-06 — v1 단일 flag 확정):** `coaching_ai` (현재 false) 단일 flag로 운영. **v1은 파트너가 주식아가방 1호뿐이므로 별도 `partner_mode` flag 미신설** — AI 코칭 = 파트너 코칭이 1:1 대응. `coaching_ai`는 T3 Gate DoD 전체 통과 + Jerry 승인 후 SQL 직접 UPDATE로만 true 전환. EF는 flag false 시 기존 템플릿 경로로 동작 (점진 전환·즉시 롤백 가능 구조). 파트너 2호 입주 시점(T4)에 `partner_mode`/파트너별 flag 분리 재검토.
 - **장애 격리:** Claude 장애 시에도 코칭 카드는 fallback으로 항상 생성 — 코어 루프(일지→D-Score) 무영향.
@@ -263,11 +263,11 @@ messages:   [{ role: 'user', content: coachingPrompt }]
 
 | # | 항목 | 시점 | 비고 |
 |---|------|------|------|
-| 1 | **`ANTHROPIC_API_KEY` Supabase Edge Function Secrets 등록** | T3 착수 전 (LOI 직후) | **GAP-1: 현재 `.env.local`에도 미등록 상태 실측 확인 (2026-06-10).** SSOT 0-4-3의 "등록 완료" 기재 정정 필요 |
+| 1 | **`ANTHROPIC_API_KEY` Supabase Edge Function Secrets 등록** | T3 착수 전 (LOI 직후) | `.env.local` 등록 완료 확인 (2026-06-11 Jerry 직접 확인). Supabase Edge Function Secrets 등록은 T3 착수 전 별도 처리 필요 (로컬 키 ≠ 프로덕션 Secrets) |
 | 2 | RevenueCat 상품 ID 설정 | T1-5 | monthly ₩29,800 / yearly ₩298,000 + test store 키 → 정식 키 교체 |
 | 3 | behavior_cohorts 운영 기준 확정 (N ≥ 몇 명?) | T3-A 전 | 본 PRD 기본값 N≥5. 상향 시 RLS 정책 값만 변경 |
 | 4 | partner_principles 시드 5종 콘텐츠 검수 | T3-A | 본방 기반 원칙 카드 — 수동 입력 (Review Layer = 사람 검수) |
 | 4b | **coach_persona 코칭 보이스 정의 (이광수형/박시동형)** | T3-B 전 | §5-4a 표의 4개 필드 확정 — 실제 본방 기반, 사실과 다른 묘사 금지 (P-03) |
 | 4c | 파트너 콘텐츠 귀속 문구 합의 ("참고: 주식아가방 원칙" 등) | T3-B 전 | 파트너와 표기 방식 합의 (P-05) |
-| 5 | Lock 5 비용 차단선($5/월) 상향 여부 | T3 운영 후 | 일지 100건/일 도달 시 월 ~$6 추정으로 차단선 초과 (7장 참조) |
+| 5 | Lock 5 비용 차단선 ($10/월, Jerry 승인 완료 2026-06-11) | 완료 | 경고선 $5 / 차단선 $10. 100건/일 기준 월 ~$6으로 여유 확보 |
 | 6 | AR01 진입점 IA 결정 (P01 내 버튼 vs 별도 라우트) | T3-F | 5-Tab 구조 변경은 Jerry 승인 사항 |
