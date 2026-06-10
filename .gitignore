@@ -49,3 +49,9 @@ supabase/.temp/
 # IDE
 .idea/
 .vscode/
+
+# Secrets / Keys
+invit-fcm-key-android.json
+*.json.key
+*-key-*.json
+*-service-account*.json
