@@ -6,11 +6,11 @@
 ---
 
 ## Executive Summary (5줄 고정)
-1. **스택:** React Native + Expo Managed Workflow (Mobile Primary) → React + Vite + Vercel (PC Web, Phase 2) | Supabase (Auth + Postgres + RLS + Edge Functions + pg_cron) | RevenueCat (인앱결제) | claude-haiku-4-5 (API 호출명 claude-3-5-haiku-20241022) — 현 MVP는 `model:'none'` DB 템플릿 조회, Claude 연동은 Phase 2/T3 예정
+1. **스택:** React Native + Expo Managed Workflow (Mobile Primary) → React + Vite + Vercel (PC Web, Phase 2) | Supabase (Auth + Postgres + RLS + Edge Functions + pg_cron) | RevenueCat (인앱결제) | Claude Haiku (claude-3-5-haiku-20241022) — 현 MVP는 `model:'none'` DB 템플릿 조회, Claude 연동은 Phase 2/T3 예정
 2. **원칙:** SSOT는 이 파일. Gate Before Go 엄수 — Gate DoD 미통과 시 다음 Sprint 착수 금지. Idempotency 필수 — 모든 일 단위 생성물은 UNIQUE + upsert.
 3. **AI 운영:** 클라이언트에서 모델 직접 호출 절대 금지. 모든 LLM/DB쓰기는 Edge Function 단일 진입만 허용.
 4. **데이터:** 4계층 분리 엄수 (User-owned / System-generated / Admin / Operational). 클라이언트는 SELECT 전용, INSERT/UPDATE는 service_role Edge Function 독점.
-5. **비용·법적·보안은 기능이 아니라 제품의 존재 조건이다.** OpenAI $5/월 차단, 투자자문 금지 필터 Edge 고정, service_role·API Key 클라이언트 노출 즉시 PR 폐기.
+5. **비용·법적·보안은 기능이 아니라 제품의 존재 조건이다.** OpenAI $10/월 차단, 투자자문 금지 필터 Edge 고정, service_role·API Key 클라이언트 노출 즉시 PR 폐기.
 
 ---
 
@@ -44,8 +44,8 @@
 - **금지:** insert-only 패턴. pg_cron 재실행·재시도에서 중복 레코드 생성 즉시 데이터 오염.
 
 ### Lock 5 — 비용 가드레일
-- `$3.00/월` → 경고 알림 (ai_call_logs 집계 기반)
-- `$5.00/월` → 자동 차단: `generate-coaching` → `return fixed_fallback_message` + `feature_flags.coaching_ai = false`
+- `$5.00/월` → 경고 알림 (ai_call_logs 집계 기반)
+- `$10.00/월` → 자동 차단: `generate-coaching` → `return fixed_fallback_message` + `feature_flags.coaching_ai = false`
 - **fallback 고정 메시지:** `"오늘의 원칙을 다시 확인해보세요. 일지를 작성하면 내일 새로운 코칭이 준비됩니다."`
 - **로깅 필수:** 모든 OpenAI 호출 시 `ai_call_logs` 테이블에 `model`, `input_tokens`, `output_tokens`, `estimated_cost_usd`, `function_name`, `user_id`, `created_at` INSERT.
 
@@ -301,7 +301,7 @@ invit/
 ---
 
 ## MVP Scope 축소 항목 (Phase 2 이관)
-- ~~NAVER CLOVA Studio~~ → claude-haiku-4-5 단일 모델 (현 MVP는 model:'none' DB 조회, Claude 연동 Phase 2·T3)
+- ~~NAVER CLOVA Studio~~ → Claude Haiku (claude-3-5-haiku-20241022) 단일 모델 (현 MVP는 model:'none' DB 조회, Claude 연동 Phase 2·T3)
 - ~~pgvector RAG~~ → 아키타입별 코칭 템플릿 DB 조회
 - ~~elevated 경보 (Layer 3)~~ → standard 2종만
 - ~~Dark Mode~~ → Phase 2
