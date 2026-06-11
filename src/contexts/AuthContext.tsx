@@ -55,7 +55,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
+    console.log('[DEBUG] SUPABASE_URL:', process.env.EXPO_PUBLIC_SUPABASE_URL);
+    console.log('[DEBUG] signUp attempt:', email);
     const { error } = await supabase.auth.signUp({ email, password });
+    console.log('[DEBUG] signUp result:', error ? error.message : 'success');
     return { error };
   };
 

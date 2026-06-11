@@ -19,7 +19,10 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { ActivityIndicator, View, Text, StyleSheet } from 'react-native';
+import { ActivityIndicator, View, Text, StyleSheet, LogBox } from 'react-native';
+
+// RevenueCat API Key는 T1-5에서 정식 키로 교체 예정 — 개발 중 LogBox 팝업 억제
+LogBox.ignoreLogs(['[RevenueCat]']);
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
