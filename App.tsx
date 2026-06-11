@@ -18,7 +18,7 @@
  *   + PrincipleManage (탭 위 풀스크린 — Home 퀵액션용)
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, View, Text, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -29,6 +29,7 @@ import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { useBiasAssessment } from './src/hooks/useBiasAssessment';
 import { Colors } from './src/constants/colors';
 import { configureRevenueCat } from './src/lib/revenuecat';
+import * as Notifications from 'expo-notifications';
 
 // Auth Screens
 import S01_Welcome from './src/screens/S01_Welcome';
@@ -50,6 +51,15 @@ import ST01_Settings from './src/screens/ST01_Settings';
 import SubscriptionScreen from './src/screens/SubscriptionScreen';
 
 import type { MainStackParamList, MainTabParamList } from './src/navigation/types';
+
+// FOMO 알림을 포그라운드에서도 배너로 표시 (setNotificationHandler는 모듈 최상단에서 1회 설정)
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
 
 const AuthStack = createNativeStackNavigator();
 const OnboardingStack = createNativeStackNavigator();
@@ -191,9 +201,29 @@ function RootNavigator() {
 }
 
 export default function App() {
+  const notificationListener = useRef<Notifications.Subscription | null>(null);
+  const responseListener = useRef<Notifications.Subscription | null>(null);
+
   // RevenueCat SDK 초기화 — 앱 시작 시 1회 실행
   useEffect(() => {
     configureRevenueCat();
+  }, []);
+
+  // 포그라운드 알림 핸들러 — FOMO 경보 전용 (Lock 2: fomo_alert flag=true 시 발송)
+  useEffect(() => {
+    notificationListener.current = Notifications.addNotificationReceivedListener(_notification => {
+      // setNotificationHandler가 shouldShowAlert:true이므로 배너 자동 표시
+      // H01_Home은 useFocusEffect로 data refetch → FOMO 배너 자동 갱신
+    });
+
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(_response => {
+      // 사용자가 알림을 탭한 경우 — H01_Home이 onFocus 시 fomo_alerts SELECT로 배너 표시
+    });
+
+    return () => {
+      notificationListener.current?.remove();
+      responseListener.current?.remove();
+    };
   }, []);
 
   return (
