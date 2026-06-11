@@ -204,9 +204,13 @@ export default function App() {
   const notificationListener = useRef<Notifications.Subscription | null>(null);
   const responseListener = useRef<Notifications.Subscription | null>(null);
 
-  // RevenueCat SDK 초기화 — 앱 시작 시 1회 실행
+  // RevenueCat SDK 초기화 — 앱 시작 시 1회 실행 (Invalid API Key는 비치명적 — 구독 기능만 비활성)
   useEffect(() => {
-    configureRevenueCat();
+    try {
+      configureRevenueCat();
+    } catch {
+      console.warn('[RevenueCat] init failed — subscription features unavailable');
+    }
   }, []);
 
   // 포그라운드 알림 핸들러 — FOMO 경보 전용 (Lock 2: fomo_alert flag=true 시 발송)
