@@ -18,8 +18,32 @@
  *   + PrincipleManage (탭 위 풀스크린 — Home 퀵액션용)
  */
 
-import React, { useEffect, useRef } from 'react';
-import { ActivityIndicator, View, Text, StyleSheet, LogBox } from 'react-native';
+import React, { useEffect, useRef, Component, type ReactNode } from 'react';
+import { ActivityIndicator, View, Text, StyleSheet, LogBox, ScrollView } from 'react-native';
+
+// Crash 원인 파악용 ErrorBoundary — 다음 빌드에서 제거 예정
+class CrashDisplay extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <View style={{ flex: 1, backgroundColor: '#fff', padding: 24, paddingTop: 60 }}>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: '#c00', marginBottom: 12 }}>
+            앱 충돌 — 에러 내용 (스크린샷 찍어 전달)
+          </Text>
+          <ScrollView>
+            <Text style={{ fontSize: 12, fontFamily: 'monospace', color: '#333' }}>
+              {String(this.state.error)}{'\n\n'}
+              {(this.state.error as Error).stack ?? '(no stack)'}
+            </Text>
+          </ScrollView>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // RevenueCat API Key는 T1-5에서 정식 키로 교체 예정 — 개발 중 LogBox 팝업 억제
 LogBox.ignoreLogs(['[RevenueCat]']);
@@ -59,11 +83,9 @@ import type { MainStackParamList, MainTabParamList } from './src/navigation/type
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
     shouldPlaySound: false,
     shouldSetBadge: false,
-  }),
+  } as any),
 });
 
 const AuthStack = createNativeStackNavigator();
@@ -236,11 +258,13 @@ export default function App() {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <RootNavigator />
-      </AuthProvider>
-    </SafeAreaProvider>
+    <CrashDisplay>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <RootNavigator />
+        </AuthProvider>
+      </SafeAreaProvider>
+    </CrashDisplay>
   );
 }
 
