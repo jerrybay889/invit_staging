@@ -6,8 +6,9 @@
 
 import React, { useState } from 'react';
 import {
-  View, TouchableOpacity, Text, StyleSheet, SafeAreaView, Alert, ActivityIndicator, ScrollView,
+  View, TouchableOpacity, Text, StyleSheet, Alert, ActivityIndicator, ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BIAS_QUESTIONS } from '../../constants/bias-questions';
 import BiasQuestionCard from '../../components/BiasQuestionCard';
@@ -67,8 +68,8 @@ export default function BiasAssessmentScreen({ navigation }: Props) {
     }
 
     navigation.replace('AssessmentResult', {
-      archetype: data.archetype,
-      biasFlags: data.bias_flags,
+      archetype: data.assessment?.archetype,
+      biasFlags: data.assessment?.bias_flags,
     });
   };
 

@@ -59,6 +59,8 @@ import type { MainStackParamList, MainTabParamList } from './src/navigation/type
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: false,
     shouldSetBadge: false,
   }),

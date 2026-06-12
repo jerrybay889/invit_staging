@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { onAssessmentRefetch } from '../lib/assessmentRefetch';
 import { BiasAssessment } from '../types/database';
 import { useAuth } from './useAuth';
 
@@ -20,7 +21,6 @@ export function useBiasAssessment() {
       return;
     }
 
-    // 초기 조회
     const fetchAssessment = async () => {
       const { data } = await supabase
         .from('bias_assessments')
@@ -35,7 +35,7 @@ export function useBiasAssessment() {
 
     fetchAssessment();
 
-    // 실시간 구독 (bias_assessments 테이블 변경 감지) — Supabase v2+ API
+    // 실시간 구독 (bias_assessments INSERT 감지)
     const channel = supabase
       .channel(`bias_assessments:${user.id}`)
       .on(
@@ -52,8 +52,13 @@ export function useBiasAssessment() {
       )
       .subscribe();
 
+    // AssessmentResultScreen의 "시작하기" 버튼이 triggerAssessmentRefetch()를 호출하면
+    // fetchAssessment를 다시 실행하여 hasAssessment=true 전환을 보장
+    const unsubscribe = onAssessmentRefetch(fetchAssessment);
+
     return () => {
       supabase.removeChannel(channel);
+      unsubscribe();
     };
   }, [user]);
 
