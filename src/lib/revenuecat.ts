@@ -20,14 +20,38 @@ const REVENUECAT_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY ?? '';
 const PREMIUM_ENTITLEMENT_ID = 'premium';
 
 let configured = false;
+let unavailable = false; // 키 없음 또는 릴리스 빌드+테스트키 → 구독 기능 비활성
+
+/**
+ * RevenueCat가 정상 구성됐는지 여부. 구독 화면/로그인 연결에서 no-op 분기용.
+ */
+export function isRevenueCatAvailable(): boolean {
+  return configured;
+}
 
 /**
  * RevenueCat SDK 초기화 — App 시작 시 1회 호출
+ *
+ * 주의: RevenueCat의 `test_` 키는 디버그 빌드에서만 허용된다.
+ * 릴리스 빌드(EAS preview/production = release APK)에서 테스트 키로 configure를 호출하면
+ * 네이티브 SDK가 "Wrong API Key" 다이얼로그를 띄우고 앱을 강제 종료한다.
+ * → 릴리스 + 테스트키 조합은 configure를 건너뛰어 앱 부팅을 보장하고 구독 기능만 비활성화한다.
+ *   (T1-5에서 production 키(goog_/appl_)로 교체하면 정상 구성됨)
  */
 export function configureRevenueCat(): void {
-  if (configured) return;
+  if (configured || unavailable) return;
   if (!REVENUECAT_API_KEY) {
     console.warn('[RevenueCat] EXPO_PUBLIC_REVENUECAT_API_KEY not set');
+    unavailable = true;
+    return;
+  }
+
+  if (REVENUECAT_API_KEY.startsWith('test_') && !__DEV__) {
+    console.warn(
+      '[RevenueCat] 릴리스 빌드에서 테스트 키 감지 — configure 생략. ' +
+        '구독 기능 비활성 (T1-5에서 production 키 교체 필요).',
+    );
+    unavailable = true;
     return;
   }
 
@@ -47,6 +71,7 @@ export async function loginRevenueCat(userId: string): Promise<void> {
   if (!configured) {
     configureRevenueCat();
   }
+  if (!configured) return; // 구성 안됨(테스트키/키없음) → no-op
   try {
     await Purchases.logIn(userId);
   } catch (err) {
@@ -58,6 +83,7 @@ export async function loginRevenueCat(userId: string): Promise<void> {
  * 로그아웃 시 RevenueCat 사용자 해제
  */
 export async function logoutRevenueCat(): Promise<void> {
+  if (!configured) return; // no-op
   try {
     await Purchases.logOut();
   } catch (err) {
@@ -69,6 +95,7 @@ export async function logoutRevenueCat(): Promise<void> {
  * 현재 CustomerInfo 조회
  */
 export async function getCustomerInfo(): Promise<CustomerInfo | null> {
+  if (!configured) return null; // 구성 안됨 → 구독 정보 없음
   try {
     return await Purchases.getCustomerInfo();
   } catch (err) {
@@ -121,6 +148,7 @@ export async function getTrialStatus(): Promise<{
  * 현재 Offering 조회 ($rc_monthly 패키지 포함)
  */
 export async function getCurrentOffering(): Promise<PurchasesOffering | null> {
+  if (!configured) return null; // 구성 안됨 → 오퍼링 없음
   try {
     const offerings = await Purchases.getOfferings();
     return offerings.current;
@@ -134,6 +162,7 @@ export async function getCurrentOffering(): Promise<PurchasesOffering | null> {
  * 구매 복원 (기존 구독 복원)
  */
 export async function restorePurchases(): Promise<boolean> {
+  if (!configured) return false; // no-op
   try {
     await Purchases.restorePurchases();
     return true;
