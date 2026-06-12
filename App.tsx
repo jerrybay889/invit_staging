@@ -56,6 +56,7 @@ import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { useBiasAssessment } from './src/hooks/useBiasAssessment';
 import { Colors } from './src/constants/colors';
 import { configureRevenueCat } from './src/lib/revenuecat';
+import { isSupabaseConfigured } from './src/lib/supabase';
 import * as Notifications from 'expo-notifications';
 
 // Auth Screens
@@ -257,6 +258,21 @@ export default function App() {
     };
   }, []);
 
+  // 환경변수 누락 시 침묵 크래시 대신 명확한 안내 화면 (EAS env 미주입 방어)
+  if (!isSupabaseConfigured) {
+    return (
+      <View style={styles.envError}>
+        <Text style={styles.envErrorTitle}>환경설정 누락</Text>
+        <Text style={styles.envErrorBody}>
+          이 빌드에 Supabase 환경변수(EXPO_PUBLIC_SUPABASE_URL / ANON_KEY)가{'\n'}
+          주입되지 않았습니다.{'\n\n'}
+          EAS 환경변수를 설정한 뒤 다시 빌드해야 합니다.{'\n'}
+          (eas env:push preview / production)
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <CrashDisplay>
       <SafeAreaProvider>
@@ -281,6 +297,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.surfaceBg,
     paddingHorizontal: 32,
+  },
+  envError: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceBg,
+    paddingHorizontal: 32,
+  },
+  envErrorTitle: {
+    fontSize: 22, fontWeight: '800', color: Colors.error, marginBottom: 16,
+  },
+  envErrorBody: {
+    fontSize: 14, color: Colors.textPrimary, textAlign: 'center', lineHeight: 22,
   },
   placeholderEmoji: { fontSize: 52, marginBottom: 16 },
   placeholderTitle: {
