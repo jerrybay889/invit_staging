@@ -44,8 +44,12 @@ export const supabase = createClient(
  * 이메일 인증/비번재설정 리다이렉트 URL.
  * 네이티브: 앱 딥링크. 웹: 현재 배포된 도메인(Netlify 등) 그대로 — 앱이 없는 웹 테스터도
  * 클릭 시 실제로 열리는 페이지로 돌아와야 detectSessionInUrl이 세션을 완성할 수 있다.
+ *
+ * 끝에 '/'를 반드시 붙인다: Supabase Redirect URL 허용목록은
+ * `https://도메인/**` 형태의 glob 패턴이라, 슬래시 없는 origin만 보내면
+ * 매칭 실패로 Site URL(invit://)로 되돌아가 웹에서 다시 무한 실패한다.
  */
 export const authRedirectTo =
   Platform.OS === 'web'
-    ? (typeof window !== 'undefined' ? window.location.origin : 'https://invit.kr')
+    ? (typeof window !== 'undefined' ? `${window.location.origin}/` : 'https://invit.kr/')
     : 'invit://auth/callback';
