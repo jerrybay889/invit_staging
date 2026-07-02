@@ -7,17 +7,25 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, ScrollView,
-  TouchableOpacity, Alert,
+  TouchableOpacity, Alert, Linking, ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Colors } from '../constants/colors';
+import { Radius, Shadow } from '../constants/theme';
 import { ARCHETYPE_DEFINITIONS } from '../constants/archetype';
 import { useSubscription } from '../hooks/useSubscription';
 import type { User } from '../types/database';
 import type { MainStackParamList } from '../navigation/types';
+
+// G2: 법적 문서 URL (Jerry: 정식 도메인 확정 후 교체)
+const LEGAL_LINKS = {
+  terms: 'https://invit.app/terms',
+  privacy: 'https://invit.app/privacy',
+  oss: 'https://invit.app/oss',
+} as const;
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
 
@@ -27,6 +35,7 @@ export default function ST01_Settings() {
   const navigation = useNavigation<Nav>();
   const { user: authUser, signOut } = useAuth();
   const [profile, setProfile] = useState<User | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const { featureEnabled, isPremium, isTrialActive, trialDaysRemaining, loading: subLoading } = useSubscription();
 
   useEffect(() => {
@@ -48,6 +57,50 @@ export default function ST01_Settings() {
       { text: '취소', style: 'cancel' },
       { text: '로그아웃', style: 'destructive', onPress: signOut },
     ]);
+  };
+
+  // G1 — 회원 탈퇴 (2단계 확인, delete-account EF 호출)
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      '회원 탈퇴',
+      '탈퇴 시 모든 투자 일지·원칙·코칭 이력이 삭제됩니다. 복구할 수 없습니다.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '탈퇴 진행',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              '정말 탈퇴하시겠습니까?',
+              '이 작업은 되돌릴 수 없습니다.',
+              [
+                { text: '취소', style: 'cancel' },
+                {
+                  text: '탈퇴 확인',
+                  style: 'destructive',
+                  onPress: confirmDelete,
+                },
+              ],
+            );
+          },
+        },
+      ],
+    );
+  };
+
+  const confirmDelete = async () => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase.functions.invoke('delete-account', {
+        body: { confirm: 'DELETE' },
+      });
+      if (error) throw error;
+      // 탈퇴 성공 — Auth 세션이 무효화되어 AuthContext가 자동으로 로그아웃 상태로 전환
+    } catch (e) {
+      setDeleting(false);
+      Alert.alert('탈퇴 실패', '잠시 후 다시 시도해주세요.');
+      console.error('[ST01] delete-account failed:', e);
+    }
   };
 
   // 구독 상태 텍스트
@@ -133,6 +186,32 @@ export default function ST01_Settings() {
           </View>
         </View>
 
+        {/* G2 — 법적 고지 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>법적 고지</Text>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => Linking.openURL(LEGAL_LINKS.terms)}
+          >
+            <Text style={styles.rowLabel}>이용약관</Text>
+            <Text style={styles.rowChevron}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => Linking.openURL(LEGAL_LINKS.privacy)}
+          >
+            <Text style={styles.rowLabel}>개인정보처리방침</Text>
+            <Text style={styles.rowChevron}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => Linking.openURL(LEGAL_LINKS.oss)}
+          >
+            <Text style={styles.rowLabel}>오픈소스 라이선스</Text>
+            <Text style={styles.rowChevron}>›</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* 앱 정보 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>앱 정보</Text>
@@ -146,6 +225,19 @@ export default function ST01_Settings() {
         <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut}>
           <Text style={styles.signOutText}>로그아웃</Text>
         </TouchableOpacity>
+
+        {/* G1 — 회원 탈퇴 */}
+        <TouchableOpacity
+          style={[styles.deleteAccountBtn, deleting && { opacity: 0.5 }]}
+          onPress={handleDeleteAccount}
+          disabled={deleting}
+        >
+          {deleting ? (
+            <ActivityIndicator color={Colors.textMuted} size="small" />
+          ) : (
+            <Text style={styles.deleteAccountText}>회원 탈퇴</Text>
+          )}
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -153,15 +245,16 @@ export default function ST01_Settings() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.surfaceBg },
-  scroll: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
+  scroll: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 88 },
   title: { fontSize: 24, fontWeight: '700', color: Colors.textPrimary, marginBottom: 20 },
   card: {
-    backgroundColor: Colors.white, borderRadius: 16,
+    backgroundColor: Colors.surface, borderRadius: Radius.lg,
     padding: 24, alignItems: 'center', marginBottom: 24,
     borderWidth: 1, borderColor: Colors.border,
+    ...Shadow.card,
   },
   avatarCircle: {
-    width: 64, height: 64, borderRadius: 32,
+    width: 64, height: 64, borderRadius: Radius.full,
     backgroundColor: Colors.primary,
     justifyContent: 'center', alignItems: 'center', marginBottom: 12,
   },
@@ -170,18 +263,18 @@ const styles = StyleSheet.create({
   email: { fontSize: 13, color: Colors.textMuted, marginBottom: 10 },
   archetypeBadge: {
     backgroundColor: Colors.primary + '15',
-    borderRadius: 20, paddingHorizontal: 14, paddingVertical: 5,
+    borderRadius: Radius.xl, paddingHorizontal: 14, paddingVertical: 5,
   },
   archetypeText: { fontSize: 13, fontWeight: '600', color: Colors.primary },
   section: {
-    backgroundColor: Colors.white, borderRadius: 12,
+    backgroundColor: Colors.surface, borderRadius: Radius.md,
     borderWidth: 1, borderColor: Colors.border,
-    marginBottom: 16, overflow: 'hidden',
+    marginBottom: 16, overflow: 'hidden', ...Shadow.card,
   },
   sectionTitle: {
-    fontSize: 12, fontWeight: '600', color: Colors.textMuted,
+    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
     paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6,
-    textTransform: 'uppercase', letterSpacing: 0.5,
+    textTransform: 'uppercase', letterSpacing: 0.8,
   },
   row: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
@@ -196,12 +289,19 @@ const styles = StyleSheet.create({
   rowBadge: {
     fontSize: 11, fontWeight: '600', color: Colors.primary,
     backgroundColor: Colors.primary + '12',
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6,
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.xs,
   },
   signOutBtn: {
-    marginTop: 8, padding: 16, borderRadius: 12,
+    marginTop: 8, padding: 16, borderRadius: Radius.md,
     backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.border,
     alignItems: 'center',
   },
   signOutText: { fontSize: 15, fontWeight: '600', color: Colors.error },
+  deleteAccountBtn: {
+    marginTop: 12, marginBottom: 8, padding: 16, borderRadius: Radius.md,
+    backgroundColor: Colors.white,
+    borderWidth: 1, borderColor: Colors.error + '60',
+    alignItems: 'center',
+  },
+  deleteAccountText: { fontSize: 15, fontWeight: '400', color: Colors.textMuted },
 });

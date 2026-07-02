@@ -12,7 +12,7 @@
  * Lock 4: UPSERT onConflict 'user_id,journal_date'
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -25,13 +25,25 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  Modal,
 } from 'react-native';
+import { Analytics } from '../lib/analytics';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { Colors } from '../constants/colors';
-import type { Principle, TradeAction, InvestmentJournal } from '../types/database';
+import { Radius, Shadow } from '../constants/theme';
+import StockSearchInput from '../components/StockSearchInput';
+import { TRADE_REASON_OPTIONS, PRINCIPLE_COMPLIANCE_OPTIONS } from '../constants/journal';
+import type {
+  Principle,
+  TradeAction,
+  InvestmentJournal,
+  TradeReasonTag,
+  PrincipleCompliance,
+  Stock,
+} from '../types/database';
 import type { MainStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
@@ -66,10 +78,28 @@ export default function J01_JournalCreate() {
   const [emotionMemo, setEmotionMemo] = useState('');
   const [principleChecks, setPrincipleChecks] = useState<Record<string, boolean>>({});
   const [principles, setPrinciples] = useState<Principle[]>([]);
+  // ── 마스터플랜 0617 Pillar 1 신규 입력 ──
+  const [tradeReasonTags, setTradeReasonTags] = useState<TradeReasonTag[]>([]);
+  const [principleCompliance, setPrincipleCompliance] = useState<PrincipleCompliance | null>(null);
+  const [impulseBuy, setImpulseBuy] = useState('');   // 사고 싶었지만 참은 종목코드
+  const [impulseSell, setImpulseSell] = useState(''); // 팔고 싶었지만 참은 종목코드
 
   // UI state
   const [saving, setSaving] = useState(false);
   const [emotionError, setEmotionError] = useState(false);
+  // G3: 즉시 코칭 피드백 모달
+  const [coachingModal, setCoachingModal] = useState(false);
+  const [coachingMessage, setCoachingMessage] = useState('');
+  const [disciplineScore, setDisciplineScore] = useState<number | null>(null);
+
+  // 일지 작성 소요 시간 측정 (entry_duration_seconds — B2B 분석 지표)
+  const entryStartRef = useRef<number>(Date.now());
+
+  const toggleReasonTag = (tag: TradeReasonTag) => {
+    setTradeReasonTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
+  };
 
   const fetchPrinciples = useCallback(async () => {
     if (!user) return;
@@ -103,6 +133,10 @@ export default function J01_JournalCreate() {
       setBiasCheck(j.bias_check ?? null);
       setEmotionMemo(j.emotion_memo ?? '');
       setPrincipleChecks(j.principle_checks ?? {});
+      setTradeReasonTags((j.trade_reason_tags as TradeReasonTag[]) ?? []);
+      setPrincipleCompliance(j.principle_compliance ?? null);
+      setImpulseBuy(j.impulse_buy_ticker ?? '');
+      setImpulseSell(j.impulse_sell_ticker ?? '');
     }
   }, [user, editDate]);
 
@@ -121,6 +155,10 @@ export default function J01_JournalCreate() {
 
     setSaving(true);
     const today = new Date().toISOString().split('T')[0];
+    const entryDuration = Math.max(
+      0,
+      Math.round((Date.now() - entryStartRef.current) / 1000),
+    );
 
     try {
       // Step 1: investment_journals UPSERT (Lock 4 — onConflict)
@@ -137,6 +175,13 @@ export default function J01_JournalCreate() {
             bias_check: biasCheck,
             emotion_memo: emotionMemo.trim() || null,
             principle_checks: principleChecks,
+            // ── Pillar 1 확장 컬럼 (마이그레이션 011) ──
+            has_trade: tradeAction !== 'none',
+            impulse_buy_ticker: tradeAction === 'none' ? impulseBuy.trim() || null : null,
+            impulse_sell_ticker: tradeAction === 'none' ? impulseSell.trim() || null : null,
+            trade_reason_tags: tradeAction !== 'none' ? tradeReasonTags : [],
+            principle_compliance: tradeAction !== 'none' ? principleCompliance : null,
+            entry_duration_seconds: entryDuration,
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'user_id,journal_date' },
@@ -144,29 +189,37 @@ export default function J01_JournalCreate() {
 
       if (journalError) throw journalError;
 
-      // Step 2: calculate-discipline EF 호출
-      // 일지 INSERT 완료 후 호출 (EF가 investment_journals를 직접 조회)
-      const { error: disciplineError } = await supabase.functions.invoke('calculate-discipline', {
-        body: { emotion_checkin: emotionCheckin, date: today },
-      });
+      // G4: 일지 저장 이벤트 계측
+      Analytics.track('journal_saved', { trade_action: tradeAction, has_rationale: !!tradeRationale.trim() });
 
+      // Step 2: calculate-discipline EF 호출
+      const { data: disciplineData, error: disciplineError } = await supabase.functions.invoke(
+        'calculate-discipline',
+        { body: { emotion_checkin: emotionCheckin, date: today } },
+      );
       if (disciplineError) {
         console.error('calculate-discipline failed:', disciplineError);
-        // 비치명적 — 일지는 저장됨
       }
+      const dScore: number | null =
+        (disciplineData as any)?.discipline?.total_score ?? null;
 
-      // Step 3: generate-coaching EF 호출
-      const { error: coachingError } = await supabase.functions.invoke('generate-coaching', {
-        body: {},
-      });
+      // Step 3: generate-coaching — await with 8s timeout (G3)
+      const coachingPromise = supabase.functions.invoke('generate-coaching', { body: {} });
+      const timeoutPromise = new Promise<{ data: null; error: Error }>((resolve) =>
+        setTimeout(() => resolve({ data: null, error: new Error('timeout') }), 8000),
+      );
+      const { data: coachingData } = await Promise.race([coachingPromise, timeoutPromise]);
+      const msg: string =
+        (coachingData as any)?.coaching?.message ??
+        '오늘의 원칙을 다시 확인해보세요. 일지를 작성하면 내일 새로운 코칭이 준비됩니다.';
 
-      if (coachingError) {
-        console.error('generate-coaching failed:', coachingError);
-        // 비치명적 — 코칭 없어도 홈 이동
-      }
+      // Step 4: 코칭 결과 모달 표시 (G3) — goBack은 모달 닫기 시
+      setDisciplineScore(dScore);
+      setCoachingMessage(msg);
+      setCoachingModal(true);
 
-      // Step 4: 탭으로 복귀 (discipline_score 갱신 트리거)
-      navigation.goBack();
+      // G4: 코칭 모달 표시 이벤트
+      Analytics.track('coaching_viewed', { source: (coachingData as any)?.coaching?.source ?? 'template' });
     } catch (error) {
       Alert.alert('저장 실패', '일지를 저장하지 못했습니다. 다시 시도해주세요.');
       console.error('Journal save failed:', error);
@@ -256,21 +309,82 @@ export default function J01_JournalCreate() {
             ))}
           </View>
 
-          {/* 매수/매도 선택 시 종목 입력 */}
+          {/* 매수/매도 선택 시: 종목 검색 + 매매 이유 + 원칙 준수 */}
           {tradeAction !== 'none' && (
-            <View style={styles.tickerRow}>
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
+            <View style={{ marginTop: 8 }}>
+              <Text style={styles.subLabel}>종목</Text>
+              <StockSearchInput
                 value={ticker}
-                onChangeText={setTicker}
-                placeholder="종목 코드 (예: 005930)"
-                placeholderTextColor={Colors.textMuted}
-                autoCapitalize="characters"
-                maxLength={10}
+                onSelect={(s: Stock | null) => setTicker(s ? s.code : '')}
               />
+
+              <Text style={[styles.subLabel, { marginTop: 16 }]}>
+                매매 이유 <Text style={styles.optional}>(복수 선택)</Text>
+              </Text>
+              <View style={styles.chipWrap}>
+                {TRADE_REASON_OPTIONS.map((opt) => {
+                  const on = tradeReasonTags.includes(opt.value);
+                  return (
+                    <TouchableOpacity
+                      key={opt.value}
+                      style={[styles.chip, on && styles.chipSelected]}
+                      onPress={() => toggleReasonTag(opt.value)}
+                    >
+                      <Text style={[styles.chipText, on && styles.chipTextSelected]}>
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <Text style={[styles.subLabel, { marginTop: 16 }]}>
+                이번 매매, 원칙을 지켰나요? <Text style={styles.optional}>(선택)</Text>
+              </Text>
+              <View style={styles.tradeRow}>
+                {PRINCIPLE_COMPLIANCE_OPTIONS.map((opt) => {
+                  const on = principleCompliance === opt.value;
+                  return (
+                    <TouchableOpacity
+                      key={opt.value}
+                      style={[styles.tradeBtn, on && styles.tradeBtnSelected]}
+                      onPress={() =>
+                        setPrincipleCompliance((prev) => (prev === opt.value ? null : opt.value))
+                      }
+                    >
+                      <Text style={[styles.tradeBtnText, on && styles.tradeBtnTextSelected]}>
+                        {opt.symbol} {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
           )}
         </View>
+
+        {/* 무거래일: 오늘의 충동 신호 (마스터플랜 Pillar 1) */}
+        {tradeAction === 'none' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>
+              오늘의 충동 신호 <Text style={styles.optional}>(선택)</Text>
+            </Text>
+            <Text style={styles.helpText}>사고 싶었지만 참은 종목이 있나요?</Text>
+            <StockSearchInput
+              value={impulseBuy}
+              onSelect={(s: Stock | null) => setImpulseBuy(s ? s.code : '')}
+              placeholder="사고 싶었던 종목 검색"
+            />
+            <Text style={[styles.helpText, { marginTop: 14 }]}>
+              팔고 싶었지만 참은 종목이 있나요?
+            </Text>
+            <StockSearchInput
+              value={impulseSell}
+              onSelect={(s: Stock | null) => setImpulseSell(s ? s.code : '')}
+              placeholder="팔고 싶었던 종목 검색"
+            />
+          </View>
+        )}
 
         {/* 매매 근거 */}
         <View style={styles.section}>
@@ -364,6 +478,39 @@ export default function J01_JournalCreate() {
         <View style={{ height: 32 }} />
       </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* G3: 즉시 코칭 피드백 모달 */}
+      <Modal
+        visible={coachingModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => { setCoachingModal(false); navigation.goBack(); }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>일지 저장 완료</Text>
+
+            {disciplineScore !== null && (
+              <View style={styles.scoreBox}>
+                <Text style={styles.scoreLabel}>오늘의 규율 점수</Text>
+                <Text style={styles.scoreValue}>{disciplineScore}<Text style={styles.scoreUnit}>/100</Text></Text>
+              </View>
+            )}
+
+            <View style={styles.coachingBox}>
+              <Text style={styles.coachingLabel}>오늘의 코칭</Text>
+              <Text style={styles.coachingText}>{coachingMessage}</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.modalCloseBtn}
+              onPress={() => { setCoachingModal(false); navigation.goBack(); }}
+            >
+              <Text style={styles.modalCloseBtnText}>확인</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -374,26 +521,33 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceBg,
   },
   scroll: {
-    padding: 16,
-    paddingBottom: 60,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 32,
   },
   dateHeader: {
-    marginBottom: 20,
+    marginBottom: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
   dateText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: Colors.textSecondary,
   },
   section: {
-    marginBottom: 24,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 16,
+    marginBottom: 12,
+    ...Shadow.card,
   },
   sectionLabel: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
     color: Colors.textPrimary,
     marginBottom: 10,
   },
@@ -403,7 +557,7 @@ const styles = StyleSheet.create({
   optional: {
     fontWeight: '400',
     color: Colors.textMuted,
-    fontSize: 13,
+    fontSize: 12,
   },
   errorText: {
     fontSize: 13,
@@ -418,7 +572,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 8,
+    borderRadius: Radius.sm,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 15,
@@ -433,20 +587,20 @@ const styles = StyleSheet.create({
   emotionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 4,
+    gap: 6,
   },
   emotionBtn: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: Radius.sm,
     borderWidth: 1.5,
     borderColor: Colors.border,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.surface2,
   },
   emotionBtnSelected: {
     borderColor: Colors.primary,
-    backgroundColor: '#E6F2F3',
+    backgroundColor: Colors.primaryLight,
   },
   emotionEmoji: {
     fontSize: 22,
@@ -470,10 +624,10 @@ const styles = StyleSheet.create({
   tradeBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: Radius.sm,
     borderWidth: 1.5,
     borderColor: Colors.border,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.surface2,
     alignItems: 'center',
   },
   tradeBtnSelected: {
@@ -492,6 +646,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 4,
   },
+  subLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  // 매매 이유 칩
+  chipWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: Radius.full,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface2,
+  },
+  chipSelected: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryLight,
+  },
+  chipText: {
+    fontSize: 13,
+    color: Colors.textPrimary,
+  },
+  chipTextSelected: {
+    color: Colors.primary,
+    fontWeight: '600',
+  },
   // Bias check
   checkRow: {
     flexDirection: 'row',
@@ -499,20 +687,20 @@ const styles = StyleSheet.create({
   },
   checkBtn: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingVertical: 11,
+    borderRadius: Radius.sm,
     borderWidth: 1.5,
     borderColor: Colors.border,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.surface2,
     alignItems: 'center',
   },
   checkBtnSelected: {
     borderColor: Colors.success,
-    backgroundColor: '#EBF5E6',
+    backgroundColor: Colors.success + '12',
   },
   checkBtnWarning: {
     borderColor: Colors.warning,
-    backgroundColor: '#FEF3E2',
+    backgroundColor: Colors.warning + '12',
   },
   checkBtnText: {
     fontSize: 14,
@@ -532,7 +720,7 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 22,
     height: 22,
-    borderRadius: 4,
+    borderRadius: Radius.xs,
     borderWidth: 1.5,
     borderColor: Colors.border,
     backgroundColor: Colors.white,
@@ -556,10 +744,11 @@ const styles = StyleSheet.create({
   // Save
   saveBtn: {
     backgroundColor: Colors.primary,
-    borderRadius: 12,
+    borderRadius: Radius.md,
     paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 12,
+    ...Shadow.elevated,
   },
   saveBtnDisabled: {
     opacity: 0.6,
@@ -574,4 +763,82 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  // G3: 코칭 피드백 모달
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.xl,
+    padding: 24,
+    width: '100%',
+    gap: 16,
+    ...Shadow.modal,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    textAlign: 'center',
+  },
+  scoreBox: {
+    backgroundColor: Colors.primary + '12',
+    borderRadius: Radius.sm,
+    padding: 16,
+    alignItems: 'center',
+  },
+  scoreLabel: {
+    fontSize: 12,
+    color: Colors.primary,
+    fontWeight: '600',
+    letterSpacing: 0.4,
+    marginBottom: 4,
+  },
+  scoreValue: {
+    fontSize: 40,
+    fontWeight: '700',
+    color: Colors.primary,
+  },
+  scoreUnit: {
+    fontSize: 18,
+    fontWeight: '400',
+    color: Colors.textMuted,
+  },
+  coachingBox: {
+    backgroundColor: Colors.surfaceBg,
+    borderRadius: Radius.sm,
+    padding: 14,
+    gap: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.primary,
+  },
+  coachingLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  coachingText: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: Colors.textPrimary,
+  },
+  modalCloseBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.md,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  modalCloseBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.white,
+  },
 });
+

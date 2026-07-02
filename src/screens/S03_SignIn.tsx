@@ -11,6 +11,7 @@ import {
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../contexts/AuthContext';
 import { Colors } from '../constants/colors';
+import { Radius, Shadow } from '../constants/theme';
 
 type Props = {
   navigation: NativeStackNavigationProp<any>;
@@ -125,13 +126,14 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontWeight: '500', color: Colors.textPrimary },
   input: {
     backgroundColor: Colors.inputBg,
-    borderWidth: 1, borderColor: Colors.border, borderRadius: 10,
+    borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.sm,
     paddingHorizontal: 14, paddingVertical: 12,
     fontSize: 15, color: Colors.textPrimary,
   },
   primaryButton: {
-    backgroundColor: Colors.primary, borderRadius: 12,
+    backgroundColor: Colors.primary, borderRadius: Radius.md,
     paddingVertical: 16, alignItems: 'center', marginTop: 8,
+    ...Shadow.elevated,
   },
   disabledButton: { opacity: 0.6 },
   primaryButtonText: { color: Colors.white, fontSize: 16, fontWeight: '600' },

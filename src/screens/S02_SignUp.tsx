@@ -1,29 +1,41 @@
 /**
  * S02 — Sign Up Screen
  * Supabase Auth email/password 회원가입
- * Lock 1: 클라이언트에서 DB 직접 쓰기 금지 — Auth만 처리
+ * G2: PIPA 필수 동의 (이용약관 + 개인정보처리방침) — 미동의 시 가입 불가
  * Lock 6: 회원가입 시 면책 문구 표시
+ * Lock 7: 동의 메타데이터만 저장, 본문은 외부 URL 호스팅
  */
 
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  SafeAreaView, ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
+  SafeAreaView, ScrollView, Alert, ActivityIndicator,
+  KeyboardAvoidingView, Platform, Linking,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import { Colors } from '../constants/colors';
+import { Radius, Shadow } from '../constants/theme';
+
+// ─── 약관 URL (Jerry: 정식 도메인 확정 후 교체) ───
+const TERMS_URL = 'https://invit.app/terms';
+const PRIVACY_URL = 'https://invit.app/privacy';
+const PRIVACY_VERSION = '1.0';
 
 type Props = {
   navigation: NativeStackNavigationProp<any>;
 };
 
 export default function S02_SignUp({ navigation }: Props) {
-  const { signUp } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [tosAgreed, setTosAgreed] = useState(false);
+  const [privacyAgreed, setPrivacyAgreed] = useState(false);
+  const [marketingAgreed, setMarketingAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const canSubmit = tosAgreed && privacyAgreed && !loading;
 
   const handleSignUp = async () => {
     if (!email.trim() || !password.trim()) {
@@ -38,18 +50,47 @@ export default function S02_SignUp({ navigation }: Props) {
       Alert.alert('입력 오류', '비밀번호가 일치하지 않습니다.');
       return;
     }
+    if (!tosAgreed || !privacyAgreed) {
+      Alert.alert('동의 필요', '이용약관과 개인정보처리방침에 동의해주세요.');
+      return;
+    }
 
     setLoading(true);
-    const { error } = await signUp(email.trim(), password);
-    setLoading(false);
+    const consentAt = new Date().toISOString();
+
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { emailRedirectTo: 'invit://auth/callback' },
+    });
 
     if (error) {
+      setLoading(false);
       Alert.alert('회원가입 실패', error.message);
-    } else {
-      Alert.alert('확인', '인증 이메일을 발송했습니다. 이메일을 확인해주세요.', [
-        { text: '확인', onPress: () => navigation.navigate('SignIn') },
-      ]);
+      return;
     }
+
+    // G2: 동의 메타데이터 저장 (Lock 7 — 본문 아닌 메타만)
+    if (data?.user?.id) {
+      supabase.from('users').upsert(
+        {
+          id: data.user.id,
+          consent: {
+            tos_at: consentAt,
+            privacy_at: consentAt,
+            privacy_version: PRIVACY_VERSION,
+            marketing: marketingAgreed,
+          },
+          status: 'active',
+        },
+        { onConflict: 'id' },
+      ).then(undefined, (e) => console.warn('[S02] consent upsert failed (non-fatal):', e));
+    }
+
+    setLoading(false);
+    Alert.alert('확인', '인증 이메일을 발송했습니다. 이메일을 확인해주세요.', [
+      { text: '확인', onPress: () => navigation.navigate('SignIn') },
+    ]);
   };
 
   return (
@@ -105,10 +146,72 @@ export default function S02_SignUp({ navigation }: Props) {
               />
             </View>
 
+            {/* G2 — 동의 항목 (PIPA 필수) */}
+            <View style={styles.consentBox}>
+              <Text style={styles.consentTitle}>약관 동의</Text>
+
+              {/* 이용약관 [필수] */}
+              <TouchableOpacity
+                style={styles.consentRow}
+                onPress={() => setTosAgreed((v) => !v)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.checkbox, tosAgreed && styles.checkboxChecked]}>
+                  {tosAgreed && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.consentLabel}>
+                  <Text style={styles.required}>[필수] </Text>
+                  <Text
+                    style={styles.consentLink}
+                    onPress={() => Linking.openURL(TERMS_URL)}
+                  >
+                    이용약관
+                  </Text>
+                  에 동의합니다
+                </Text>
+              </TouchableOpacity>
+
+              {/* 개인정보처리방침 [필수] */}
+              <TouchableOpacity
+                style={styles.consentRow}
+                onPress={() => setPrivacyAgreed((v) => !v)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.checkbox, privacyAgreed && styles.checkboxChecked]}>
+                  {privacyAgreed && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.consentLabel}>
+                  <Text style={styles.required}>[필수] </Text>
+                  <Text
+                    style={styles.consentLink}
+                    onPress={() => Linking.openURL(PRIVACY_URL)}
+                  >
+                    개인정보처리방침
+                  </Text>
+                  에 동의합니다
+                </Text>
+              </TouchableOpacity>
+
+              {/* 마케팅 알림 [선택] */}
+              <TouchableOpacity
+                style={styles.consentRow}
+                onPress={() => setMarketingAgreed((v) => !v)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.checkbox, marketingAgreed && styles.checkboxChecked]}>
+                  {marketingAgreed && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.consentLabel}>
+                  <Text style={styles.optional}>[선택] </Text>
+                  마케팅·서비스 알림 수신에 동의합니다
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             <TouchableOpacity
-              style={[styles.primaryButton, loading && styles.disabledButton]}
+              style={[styles.primaryButton, !canSubmit && styles.disabledButton]}
               onPress={handleSignUp}
-              disabled={loading}
+              disabled={!canSubmit}
             >
               {loading ? (
                 <ActivityIndicator color={Colors.white} />
@@ -155,21 +258,55 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontWeight: '500', color: Colors.textPrimary },
   input: {
     backgroundColor: Colors.inputBg,
-    borderWidth: 1, borderColor: Colors.border, borderRadius: 10,
+    borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.sm,
     paddingHorizontal: 14, paddingVertical: 12,
     fontSize: 15, color: Colors.textPrimary,
   },
-  primaryButton: {
-    backgroundColor: Colors.primary, borderRadius: 12,
-    paddingVertical: 16, alignItems: 'center', marginTop: 8,
+  // ─── G2: 동의 스타일 ───
+  consentBox: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 14,
+    gap: 12,
+    marginTop: 4,
   },
-  disabledButton: { opacity: 0.6 },
+  consentTitle: {
+    fontSize: 12, fontWeight: '600', color: Colors.textMuted,
+    textTransform: 'uppercase', letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  consentRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+  },
+  checkbox: {
+    width: 22, height: 22, borderRadius: Radius.xs,
+    borderWidth: 1.5, borderColor: Colors.border,
+    justifyContent: 'center', alignItems: 'center',
+    backgroundColor: Colors.surfaceBg,
+  },
+  checkboxChecked: {
+    backgroundColor: Colors.primary, borderColor: Colors.primary,
+  },
+  checkmark: { fontSize: 13, color: Colors.white, fontWeight: '700' },
+  consentLabel: { flex: 1, fontSize: 13, color: Colors.textPrimary, lineHeight: 19 },
+  consentLink: { color: Colors.primary, textDecorationLine: 'underline' },
+  required: { color: Colors.error, fontWeight: '600' },
+  optional: { color: Colors.textMuted },
+  // ─── 버튼 ───
+  primaryButton: {
+    backgroundColor: Colors.primary, borderRadius: Radius.md,
+    paddingVertical: 16, alignItems: 'center', marginTop: 8,
+    ...Shadow.elevated,
+  },
+  disabledButton: { opacity: 0.45 },
   primaryButtonText: { color: Colors.white, fontSize: 16, fontWeight: '600' },
   linkButton: { alignItems: 'center', marginTop: 20 },
   linkText: { color: Colors.textSecondary, fontSize: 14 },
   disclaimerBox: {
     marginTop: 32, padding: 14,
-    backgroundColor: Colors.white, borderRadius: 8,
+    backgroundColor: Colors.surface, borderRadius: Radius.sm,
     borderWidth: 1, borderColor: Colors.border,
   },
   disclaimerText: { fontSize: 11, lineHeight: 17, color: Colors.textMuted },

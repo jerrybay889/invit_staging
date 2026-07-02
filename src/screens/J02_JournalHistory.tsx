@@ -13,6 +13,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Colors } from '../constants/colors';
+import { Radius, Shadow } from '../constants/theme';
 import type { InvestmentJournal } from '../types/database';
 import type { MainStackParamList } from '../navigation/types';
 
@@ -42,7 +43,7 @@ export default function J02_JournalHistory() {
     setLoading(true);
     const { data } = await supabase
       .from('investment_journals')
-      .select('id, journal_date, emotion_checkin, trade_action, trade_rationale')
+      .select('id, journal_date, emotion_checkin, trade_action, trade_rationale, principle_compliance, impulse_buy_ticker, impulse_sell_ticker')
       .eq('user_id', user.id)
       .order('journal_date', { ascending: false })
       .limit(50);
@@ -104,10 +105,29 @@ export default function J02_JournalHistory() {
               </View>
               <View style={styles.cardContent}>
                 <Text style={styles.cardDate}>{formatDate(item.journal_date)}</Text>
-                <Text style={styles.cardMeta}>
-                  {TRADE_LABEL[item.trade_action ?? 'none']}
-                  {item.trade_rationale ? '  · 근거 있음' : ''}
-                </Text>
+                <View style={styles.cardMetaRow}>
+                  <Text style={styles.cardMeta}>
+                    {TRADE_LABEL[item.trade_action ?? 'none']}
+                    {item.trade_action === 'none' && (item.impulse_buy_ticker || item.impulse_sell_ticker)
+                      ? '  · 충동신호 ✓' : ''}
+                    {item.trade_rationale ? '  · 근거 있음' : ''}
+                  </Text>
+                  {item.principle_compliance ? (
+                    <Text style={[
+                      styles.complianceDot,
+                      {
+                        color: item.principle_compliance === 'kept'
+                          ? Colors.success
+                          : item.principle_compliance === 'partial'
+                            ? Colors.warning
+                            : Colors.error,
+                      },
+                    ]}>
+                      {item.principle_compliance === 'kept' ? 'O'
+                        : item.principle_compliance === 'partial' ? '△' : 'X'}
+                    </Text>
+                  ) : null}
+                </View>
               </View>
               <Text style={styles.chevron}>›</Text>
             </TouchableOpacity>
@@ -126,29 +146,32 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 24, fontWeight: '700', color: Colors.textPrimary },
   writeBtn: {
-    backgroundColor: Colors.primary, borderRadius: 20,
+    backgroundColor: Colors.primary, borderRadius: Radius.full,
     paddingHorizontal: 16, paddingVertical: 8,
   },
   writeBtnText: { fontSize: 14, fontWeight: '600', color: Colors.white },
-  list: { paddingHorizontal: 20, paddingBottom: 60 },
+  list: { paddingHorizontal: 20, paddingBottom: 88 },
   card: {
-    backgroundColor: Colors.white, borderRadius: 12,
+    backgroundColor: Colors.surface, borderRadius: Radius.md,
     borderWidth: 1, borderColor: Colors.border,
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingVertical: 14, marginBottom: 8,
+    ...Shadow.card,
   },
   cardLeft: { marginRight: 12 },
   cardEmoji: { fontSize: 28 },
   cardContent: { flex: 1 },
   cardDate: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
-  cardMeta: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
+  cardMetaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
+  cardMeta: { fontSize: 12, color: Colors.textMuted, flex: 1 },
+  complianceDot: { fontSize: 13, fontWeight: '700', marginLeft: 8 },
   chevron: { fontSize: 20, color: Colors.textMuted },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
   emptyEmoji: { fontSize: 52, marginBottom: 16 },
   emptyTitle: { fontSize: 17, fontWeight: '600', color: Colors.textPrimary, marginBottom: 8, textAlign: 'center' },
   emptyDesc: { fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
   emptyBtn: {
-    backgroundColor: Colors.primary, borderRadius: 12,
+    backgroundColor: Colors.primary, borderRadius: Radius.md,
     paddingHorizontal: 28, paddingVertical: 14,
   },
   emptyBtnText: { fontSize: 15, fontWeight: '600', color: Colors.white },

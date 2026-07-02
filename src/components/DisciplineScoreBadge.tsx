@@ -10,6 +10,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '../constants/colors';
+import { Radius } from '../constants/theme';
 
 interface Props {
   score: number;
@@ -44,7 +45,7 @@ export default function DisciplineScoreBadge({ score, streak }: Props) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.white,
-    borderRadius: 16, padding: 20,
+    borderRadius: Radius.lg, padding: 20,
     borderWidth: 1, borderColor: Colors.border,
   },
   label: { fontSize: 13, color: Colors.textMuted, fontWeight: '500', marginBottom: 8 },

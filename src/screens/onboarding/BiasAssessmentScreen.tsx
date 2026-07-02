@@ -4,7 +4,7 @@
  * Lock 3: 클라이언트에서 bias_flags 직접 계산 금지 → submit-bias-assessment EF 호출만
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, TouchableOpacity, Text, StyleSheet, Alert, ActivityIndicator, ScrollView,
 } from 'react-native';
@@ -15,6 +15,8 @@ import BiasQuestionCard from '../../components/BiasQuestionCard';
 import { supabase } from '../../lib/supabase';
 import { BiasAnswers } from '../../types/database';
 import { Colors } from '../../constants/colors';
+import { Radius } from '../../constants/theme';
+import { Analytics } from '../../lib/analytics';
 
 type Props = {
   navigation: NativeStackNavigationProp<any>;
@@ -24,6 +26,11 @@ export default function BiasAssessmentScreen({ navigation }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  // G4: 온보딩 시작 계측
+  useEffect(() => {
+    Analytics.track('onboarding_started');
+  }, []);
 
   const currentQuestion = BIAS_QUESTIONS[currentIndex];
   const currentAnswer = answers[currentQuestion.key] ?? null;
@@ -130,13 +137,13 @@ const styles = StyleSheet.create({
   spacer: { flex: 1 },
   backButton: {
     paddingHorizontal: 20, paddingVertical: 12,
-    borderRadius: 10, borderWidth: 1, borderColor: Colors.border,
+    borderRadius: Radius.sm, borderWidth: 1, borderColor: Colors.border,
   },
   backButtonText: { fontSize: 15, color: Colors.textSecondary },
   nextButton: {
     backgroundColor: Colors.primary,
     paddingHorizontal: 28, paddingVertical: 12,
-    borderRadius: 10, minWidth: 100, alignItems: 'center',
+    borderRadius: Radius.sm, minWidth: 100, alignItems: 'center',
   },
   disabledButton: { opacity: 0.4 },
   nextButtonText: { fontSize: 15, fontWeight: '600', color: Colors.white },

@@ -8,7 +8,7 @@
  *   구독 중     → "프리미엄 이용 중" + 구독 취소 안내
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -22,7 +22,9 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Colors } from '../constants/colors';
+import { Radius } from '../constants/theme';
 import { useSubscription } from '../hooks/useSubscription';
+import { Analytics } from '../lib/analytics';
 
 const FEATURES = [
   { icon: '📊', text: '투자 편향 진단 + 아키타입 코칭' },
@@ -34,6 +36,11 @@ const FEATURES = [
 
 export default function SubscriptionScreen() {
   const navigation = useNavigation();
+
+  // G4: 페이월 조회 계측
+  useEffect(() => {
+    Analytics.track('paywall_viewed');
+  }, []);
   const {
     isPremium,
     isTrialActive,
@@ -164,7 +171,7 @@ export default function SubscriptionScreen() {
             disabled={purchasing}
           >
             {purchasing ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={Colors.white} />
             ) : (
               <Text style={styles.primaryBtnText}>
                 {isTrialActive ? '구독 시작하기' : '프리미엄 구독 ₩9,900/월'}
@@ -198,7 +205,7 @@ const styles = StyleSheet.create({
 
   statusBadgeWrap: { alignItems: 'center', marginBottom: 16 },
   statusBadge: {
-    borderRadius: 20, paddingHorizontal: 16, paddingVertical: 6,
+    borderRadius: Radius.xl, paddingHorizontal: 16, paddingVertical: 6,
   },
   statusBadgeText: { fontSize: 13, fontWeight: '700' },
 
@@ -212,7 +219,7 @@ const styles = StyleSheet.create({
   },
 
   featureList: {
-    backgroundColor: Colors.white, borderRadius: 14,
+    backgroundColor: Colors.white, borderRadius: Radius.md,
     padding: 16, marginBottom: 20,
     borderWidth: 1, borderColor: Colors.border,
   },
@@ -222,7 +229,7 @@ const styles = StyleSheet.create({
 
   priceCard: {
     backgroundColor: Colors.primary + '08',
-    borderRadius: 12, padding: 16,
+    borderRadius: Radius.md, padding: 16,
     alignItems: 'center', marginBottom: 20,
     borderWidth: 1, borderColor: Colors.primary + '20',
   },
@@ -233,14 +240,14 @@ const styles = StyleSheet.create({
   },
 
   primaryBtn: {
-    backgroundColor: Colors.primary, borderRadius: 14,
+    backgroundColor: Colors.primary, borderRadius: Radius.md,
     paddingVertical: 16, alignItems: 'center', marginBottom: 12,
   },
   primaryBtnDisabled: { opacity: 0.6 },
-  primaryBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  primaryBtnText: { color: Colors.white, fontSize: 16, fontWeight: '700' },
 
   subscribedBanner: {
-    backgroundColor: Colors.success + '10', borderRadius: 12,
+    backgroundColor: Colors.success + '10', borderRadius: Radius.md,
     padding: 16, marginBottom: 12,
     borderWidth: 1, borderColor: Colors.success + '25',
     alignItems: 'center',
@@ -249,7 +256,7 @@ const styles = StyleSheet.create({
 
   manageBtn: {
     borderWidth: 1.5, borderColor: Colors.primary,
-    borderRadius: 14, paddingVertical: 14,
+    borderRadius: Radius.md, paddingVertical: 14,
     alignItems: 'center', marginBottom: 12,
   },
   manageBtnText: { color: Colors.primary, fontSize: 15, fontWeight: '600' },

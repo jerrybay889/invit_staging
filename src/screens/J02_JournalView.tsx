@@ -18,9 +18,11 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { Colors } from '../constants/colors';
+import { Radius, Shadow, Spacing } from '../constants/theme';
 import { getDisciplineColor, getDisciplineMessage } from '../constants/discipline';
 import type { InvestmentJournal, DisciplineLog, Principle } from '../types/database';
 import type { MainStackParamList } from '../navigation/types';
+import { TRADE_REASON_OPTIONS, PRINCIPLE_COMPLIANCE_OPTIONS } from '../constants/journal';
 
 type Nav = NativeStackNavigationProp<MainStackParamList>;
 type RouteParams = RouteProp<MainStackParamList, 'JournalView'>;
@@ -166,7 +168,67 @@ export default function J02_JournalView() {
             <Text style={styles.rationaleText}>{journal.trade_rationale}</Text>
           </View>
         ) : null}
+        {/* 매매 이유 태그 */}
+        {journal.trade_reason_tags && journal.trade_reason_tags.length > 0 ? (
+          <View style={styles.tagsSection}>
+            <Text style={styles.rationaleLabel}>매매 이유</Text>
+            <View style={styles.tagsRow}>
+              {(journal.trade_reason_tags as string[]).map((tag) => {
+                const opt = TRADE_REASON_OPTIONS.find((o) => o.value === tag);
+                return (
+                  <View key={tag} style={styles.tagChip}>
+                    <Text style={styles.tagChipText}>{opt?.label ?? tag}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        ) : null}
+        {/* 원칙 준수 종합 (O/△/X) */}
+        {journal.principle_compliance ? (() => {
+          const opt = PRINCIPLE_COMPLIANCE_OPTIONS.find((o) => o.value === journal.principle_compliance);
+          const color = journal.principle_compliance === 'kept'
+            ? Colors.success
+            : journal.principle_compliance === 'partial'
+              ? Colors.warning
+              : Colors.error;
+          return opt ? (
+            <View style={styles.complianceRow}>
+              <Text style={styles.rationaleLabel}>원칙 준수 종합</Text>
+              <View style={[styles.complianceBadge, { borderColor: color }]}>
+                <Text style={[styles.complianceSymbol, { color }]}>{opt.symbol}</Text>
+                <Text style={[styles.complianceLabel, { color }]}>{opt.label}</Text>
+              </View>
+            </View>
+          ) : null;
+        })() : null}
       </View>
+
+      {/* 충동 신호 (무거래일) */}
+      {journal.trade_action === 'none' &&
+        (journal.impulse_buy_ticker || journal.impulse_sell_ticker) ? (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>충동 신호 (참은 것)</Text>
+          {journal.impulse_buy_ticker ? (
+            <View style={styles.impulseRow}>
+              <Text style={styles.impulseIcon}>🛒</Text>
+              <View>
+                <Text style={styles.impulseLabel}>사고 싶었지만 참은 종목</Text>
+                <Text style={styles.impulseTicker}>{journal.impulse_buy_ticker}</Text>
+              </View>
+            </View>
+          ) : null}
+          {journal.impulse_sell_ticker ? (
+            <View style={styles.impulseRow}>
+              <Text style={styles.impulseIcon}>💸</Text>
+              <View>
+                <Text style={styles.impulseLabel}>팔고 싶었지만 참은 종목</Text>
+                <Text style={styles.impulseTicker}>{journal.impulse_sell_ticker}</Text>
+              </View>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
 
       {/* 편향 점검 */}
       <View style={styles.card}>
@@ -263,17 +325,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   card: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    ...Shadow.card,
   },
   cardTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.textMuted,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
     marginBottom: 10,
   },
   // Emotion
@@ -311,8 +376,8 @@ const styles = StyleSheet.create({
   rationaleBox: {
     marginTop: 10,
     backgroundColor: Colors.surfaceBg,
-    borderRadius: 8,
-    padding: 10,
+    borderRadius: Radius.sm,
+    padding: Spacing.smd,
   },
   rationaleLabel: {
     fontSize: 12,
@@ -376,13 +441,13 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 8,
     backgroundColor: Colors.border,
-    borderRadius: 4,
+    borderRadius: Radius.xs,
     overflow: 'hidden',
   },
   scoreBarFill: {
     height: '100%',
     backgroundColor: Colors.primary,
-    borderRadius: 4,
+    borderRadius: Radius.xs,
   },
   scoreValue: {
     width: 36,
@@ -390,6 +455,73 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontWeight: '600',
     textAlign: 'right',
+  },
+  // New fields
+  tagsSection: {
+    marginTop: 10,
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 4,
+  },
+  tagChip: {
+    backgroundColor: Colors.surfaceBg,
+    borderRadius: Radius.xs,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  tagChipText: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  complianceRow: {
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  complianceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1.5,
+    borderRadius: Radius.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  complianceSymbol: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  complianceLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  impulseRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    paddingVertical: 6,
+  },
+  impulseIcon: {
+    fontSize: 20,
+    width: 24,
+    textAlign: 'center',
+  },
+  impulseLabel: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    marginBottom: 2,
+  },
+  impulseTicker: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.textPrimary,
   },
   // Empty / buttons
   emptyTitle: {
@@ -405,9 +537,9 @@ const styles = StyleSheet.create({
   },
   writeBtn: {
     backgroundColor: Colors.primary,
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    borderRadius: Radius.sm,
+    paddingVertical: Spacing.smd,
+    paddingHorizontal: Spacing.lg,
   },
   writeBtnText: {
     color: Colors.white,
@@ -417,8 +549,8 @@ const styles = StyleSheet.create({
   editBtn: {
     borderWidth: 1.5,
     borderColor: Colors.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderRadius: Radius.md,
+    paddingVertical: Spacing.md,
     alignItems: 'center',
     marginTop: 8,
   },

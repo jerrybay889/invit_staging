@@ -8,6 +8,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Archetype, BiasFlags } from '../types/database';
 import { ARCHETYPE_DEFINITIONS } from '../constants/archetype';
 import { Colors } from '../constants/colors';
+import { Radius, Shadow } from '../constants/theme';
 
 interface Props {
   archetype: Archetype;
@@ -55,25 +56,23 @@ export default function ArchetypeResultCard({ archetype, biasFlags }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
     borderLeftWidth: 4,
     padding: 20,
     marginVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    ...Shadow.card,
   },
   archetypeName: { fontSize: 22, fontWeight: '700', marginBottom: 6 },
   description: { fontSize: 15, color: Colors.textSecondary, lineHeight: 22 },
   biasSection: { marginTop: 16 },
-  biasTitle: { fontSize: 13, fontWeight: '600', color: Colors.textMuted, marginBottom: 8 },
+  biasTitle: { fontSize: 11, fontWeight: '700', color: Colors.textMuted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 },
   biasChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
     backgroundColor: Colors.error + '12',
-    borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: Radius.full, paddingHorizontal: 10, paddingVertical: 4,
   },
-  chipText: { fontSize: 13, color: Colors.error, fontWeight: '500' },
+  chipText: { fontSize: 12, color: Colors.error, fontWeight: '600' },
 });

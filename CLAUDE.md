@@ -6,7 +6,7 @@
 ---
 
 ## Executive Summary (5줄 고정)
-1. **스택:** React Native + Expo Managed Workflow (Mobile Primary) → React + Vite + Vercel (PC Web, Phase 2) | Supabase (Auth + Postgres + RLS + Edge Functions + pg_cron) | RevenueCat (인앱결제) | Claude Haiku (claude-3-5-haiku-20241022) — 현 MVP는 `model:'none'` DB 템플릿 조회, Claude 연동은 Phase 2/T3 예정
+1. **스택:** React Native + Expo Managed Workflow (Mobile Primary) → React + Vite + Vercel (PC Web, Phase 2) | Supabase (Auth + Postgres + RLS + Edge Functions + pg_cron) | RevenueCat (인앱결제) | 인앱 코칭=Claude Haiku (`claude-haiku-4-5`)·페르소나 Sonnet (`claude-sonnet-4-6`) / 외부 시황 파이프라인=Gemini 2.5 Pro (0617 하이브리드 확정) — `generate-coaching`에 게이트형 Claude 연동 구현(ANTHROPIC_API_KEY + `coaching_ai` 플래그 동시 충족 시 활성, 미설정 시 `model:'none'` 템플릿 폴백). 독자 런칭 코어로 승격(0617 마스터플랜)
 2. **원칙:** SSOT는 이 파일. Gate Before Go 엄수 — Gate DoD 미통과 시 다음 Sprint 착수 금지. Idempotency 필수 — 모든 일 단위 생성물은 UNIQUE + upsert.
 3. **AI 운영:** 클라이언트에서 모델 직접 호출 절대 금지. 모든 LLM/DB쓰기는 Edge Function 단일 진입만 허용.
 4. **데이터:** 4계층 분리 엄수 (User-owned / System-generated / Admin / Operational). 클라이언트는 SELECT 전용, INSERT/UPDATE는 service_role Edge Function 독점.
@@ -301,7 +301,7 @@ invit/
 ---
 
 ## MVP Scope 축소 항목 (Phase 2 이관)
-- ~~NAVER CLOVA Studio~~ → Claude Haiku (claude-3-5-haiku-20241022) 단일 모델 (현 MVP는 model:'none' DB 조회, Claude 연동 Phase 2·T3)
+- ~~NAVER CLOVA Studio~~ → 인앱 코칭=Claude (`claude-haiku-4-5` / 페르소나 `claude-sonnet-4-6`) · 외부 시황 파이프라인=Gemini 2.5 Pro (0617 하이브리드). `generate-coaching` 게이트형 연동 구현 완료 — 키·플래그 미설정 시 `model:'none'` 템플릿 폴백
 - ~~pgvector RAG~~ → 아키타입별 코칭 템플릿 DB 조회
 - ~~elevated 경보 (Layer 3)~~ → standard 2종만
 - ~~Dark Mode~~ → Phase 2

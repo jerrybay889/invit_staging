@@ -23,8 +23,14 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { Colors } from '../constants/colors';
+import { Radius, Shadow } from '../constants/theme';
 import { ARCHETYPE_DEFINITIONS } from '../constants/archetype';
-import type { Principle } from '../types/database';
+import type { Principle, PrincipleMaster } from '../types/database';
+
+type MasterFilter = 'all' | 'global' | 'kr' | 'invit';
+const MASTER_FILTER_LABELS: Record<MasterFilter, string> = {
+  all: '전체', global: '글로벌 대가', kr: '한국 투자가', invit: 'INVIT 독자',
+};
 
 interface ArchetypeTemplate {
   id: string;
@@ -43,6 +49,11 @@ export default function P01_PrincipleManage() {
   const [addingTemplateId, setAddingTemplateId] = useState<string | null>(null);
   const [newContent, setNewContent] = useState('');
   const [suggestionsExpanded, setSuggestionsExpanded] = useState(true);
+  const [masterPrinciples, setMasterPrinciples] = useState<PrincipleMaster[]>([]);
+  const [masterExpanded, setMasterExpanded] = useState(false);
+  const [masterFilter, setMasterFilter] = useState<MasterFilter>('all');
+  const [masterLoading, setMasterLoading] = useState(false);
+  const [addingMasterId, setAddingMasterId] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
@@ -155,6 +166,37 @@ export default function P01_PrincipleManage() {
       },
     ]);
   };
+
+  const loadMasterPrinciples = async () => {
+    setMasterLoading(true);
+    const query = supabase
+      .from('principles_master')
+      .select('id, title, body_text, source_author, source_tier, bias_tags, behavior_tags, tier, is_verified')
+      .eq('is_active', true)
+      .order('tier', { ascending: true })
+      .order('user_save_count', { ascending: false })
+      .limit(60);
+    const { data } = await query;
+    setMasterPrinciples((data as PrincipleMaster[]) ?? []);
+    setMasterLoading(false);
+  };
+
+  const handleToggleMaster = () => {
+    if (!masterExpanded && masterPrinciples.length === 0) {
+      loadMasterPrinciples();
+    }
+    setMasterExpanded(prev => !prev);
+  };
+
+  const handleAddMaster = async (master: PrincipleMaster) => {
+    setAddingMasterId(master.id);
+    await addPrinciple(master.body_text);
+    setAddingMasterId(null);
+  };
+
+  const filteredMaster = masterFilter === 'all'
+    ? masterPrinciples
+    : masterPrinciples.filter(m => m.source_tier === masterFilter);
 
   const archetypeDef = userArchetype
     ? ARCHETYPE_DEFINITIONS.find(a => a.key === userArchetype)
@@ -275,6 +317,84 @@ export default function P01_PrincipleManage() {
           </View>
         )}
 
+        {/* 글로벌 대가 원칙 탐색 (principles_master) */}
+        <View style={styles.masterSection}>
+          <TouchableOpacity style={styles.masterHeader} onPress={handleToggleMaster}>
+            <View style={styles.suggestHeaderLeft}>
+              <Text style={styles.masterTitle}>글로벌 대가 원칙 탐색</Text>
+              <Text style={styles.suggestSubtitle}>버핏·그레이엄·린치 등 검증된 원칙 {masterPrinciples.length > 0 ? `${masterPrinciples.length}개` : ''}</Text>
+            </View>
+            <Text style={styles.chevron}>{masterExpanded ? '▲' : '▼'}</Text>
+          </TouchableOpacity>
+
+          {masterExpanded && (
+            <View>
+              {/* 필터 탭 */}
+              <View style={styles.masterFilterRow}>
+                {(Object.keys(MASTER_FILTER_LABELS) as MasterFilter[]).map(f => (
+                  <TouchableOpacity
+                    key={f}
+                    style={[styles.filterTab, masterFilter === f && styles.filterTabActive]}
+                    onPress={() => setMasterFilter(f)}
+                  >
+                    <Text style={[styles.filterTabText, masterFilter === f && styles.filterTabTextActive]}>
+                      {MASTER_FILTER_LABELS[f]}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {masterLoading ? (
+                <ActivityIndicator color={Colors.primary} style={{ marginVertical: 20 }} />
+              ) : filteredMaster.length === 0 ? (
+                <Text style={styles.masterEmpty}>해당 카테고리 원칙이 없습니다</Text>
+              ) : (
+                <View style={styles.masterList}>
+                  {filteredMaster.map(m => {
+                    const alreadyAdded = addedContents.has(m.body_text);
+                    const isAdding = addingMasterId === m.id;
+                    return (
+                      <View key={m.id} style={styles.masterCard}>
+                        <View style={styles.masterCardTop}>
+                          <Text style={styles.masterAuthor}>
+                            {m.source_author}{m.is_verified ? ' ✓' : ''}
+                          </Text>
+                          <TouchableOpacity
+                            style={[styles.addTplBtn, alreadyAdded && styles.addTplBtnAdded]}
+                            onPress={() => !alreadyAdded && handleAddMaster(m)}
+                            disabled={alreadyAdded || isAdding}
+                          >
+                            {isAdding ? (
+                              <ActivityIndicator size="small" color={Colors.primary} />
+                            ) : (
+                              <Text style={[styles.addTplBtnText, alreadyAdded && styles.addTplBtnTextAdded]}>
+                                {alreadyAdded ? '✓ 추가됨' : '+ 추가'}
+                              </Text>
+                            )}
+                          </TouchableOpacity>
+                        </View>
+                        {m.title ? (
+                          <Text style={styles.masterTitle2}>{m.title}</Text>
+                        ) : null}
+                        <Text style={styles.masterBody}>{m.body_text}</Text>
+                        {m.bias_tags?.length > 0 ? (
+                          <View style={styles.tagsRow}>
+                            {m.bias_tags.slice(0, 3).map(t => (
+                              <View key={t} style={styles.biasTag}>
+                                <Text style={styles.biasTagText}>{t}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        ) : null}
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+
         {/* 내 원칙 목록 */}
         <View style={styles.myPrinciplesSection}>
           <Text style={styles.sectionLabel}>
@@ -316,7 +436,7 @@ export default function P01_PrincipleManage() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.surfaceBg },
-  scrollContent: { paddingBottom: 60 },
+  scrollContent: { paddingBottom: 88 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.surfaceBg },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
@@ -337,7 +457,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 8,
+    borderRadius: Radius.sm,
     paddingHorizontal: 12,
     fontSize: 15,
     color: Colors.textPrimary,
@@ -345,7 +465,7 @@ const styles = StyleSheet.create({
   },
   addBtn: {
     backgroundColor: Colors.primary,
-    borderRadius: 8,
+    borderRadius: Radius.sm,
     paddingHorizontal: 16,
     height: 44,
     justifyContent: 'center',
@@ -357,7 +477,7 @@ const styles = StyleSheet.create({
   suggestSection: {
     margin: 16,
     backgroundColor: Colors.white,
-    borderRadius: 12,
+    borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.primary + '30',
     overflow: 'hidden',
@@ -377,7 +497,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     padding: 12,
     backgroundColor: Colors.surfaceBg,
-    borderRadius: 8,
+    borderRadius: Radius.sm,
     borderWidth: 1,
     borderColor: Colors.border,
   },
@@ -389,7 +509,7 @@ const styles = StyleSheet.create({
   },
   categoryBadge: {
     backgroundColor: Colors.primary + '15',
-    borderRadius: 4,
+    borderRadius: Radius.xs,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
@@ -397,7 +517,7 @@ const styles = StyleSheet.create({
   addTplBtn: {
     borderWidth: 1,
     borderColor: Colors.primary,
-    borderRadius: 6,
+    borderRadius: Radius.xs,
     paddingHorizontal: 10,
     paddingVertical: 4,
     minWidth: 64,
@@ -407,6 +527,77 @@ const styles = StyleSheet.create({
   addTplBtnText: { fontSize: 13, fontWeight: '600', color: Colors.primary },
   addTplBtnTextAdded: { color: Colors.textMuted },
   suggestContent: { fontSize: 14, color: Colors.textPrimary, lineHeight: 20 },
+  // 글로벌 대가 원칙
+  masterSection: {
+    margin: 16,
+    marginTop: 0,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+  },
+  masterHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: Colors.surfaceBg,
+  },
+  masterTitle: { fontSize: 15, fontWeight: '700', color: Colors.textPrimary },
+  masterFilterRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    backgroundColor: Colors.white,
+  },
+  filterTab: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  filterTabActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  filterTabText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500' },
+  filterTabTextActive: { color: Colors.white },
+  masterEmpty: {
+    textAlign: 'center',
+    color: Colors.textMuted,
+    fontSize: 13,
+    padding: 20,
+  },
+  masterList: { paddingHorizontal: 12, paddingVertical: 8 },
+  masterCard: {
+    backgroundColor: Colors.surfaceBg,
+    borderRadius: Radius.sm,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  masterCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  masterAuthor: { fontSize: 12, fontWeight: '600', color: Colors.textMuted },
+  masterTitle2: { fontSize: 13, fontWeight: '700', color: Colors.textPrimary, marginBottom: 4 },
+  masterBody: { fontSize: 14, color: Colors.textPrimary, lineHeight: 20 },
+  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 8 },
+  biasTag: {
+    backgroundColor: Colors.primary + '12',
+    borderRadius: Radius.xs,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  biasTagText: { fontSize: 11, color: Colors.primary, fontWeight: '500' },
   // 내 원칙
   myPrinciplesSection: { paddingHorizontal: 16, paddingBottom: 24 },
   sectionLabel: {
@@ -416,14 +607,15 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.surface,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: Radius.sm,
     borderWidth: 1,
     borderColor: Colors.border,
     gap: 8,
     marginBottom: 8,
+    ...Shadow.card,
   },
   rowContent: { flex: 1 },
   rowText: { fontSize: 15, color: Colors.textPrimary, lineHeight: 22 },
@@ -431,15 +623,15 @@ const styles = StyleSheet.create({
   deleteBtn: {
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: '#FEE2E2',
+    borderRadius: Radius.xs,
+    backgroundColor: Colors.disciplineRed + '18',
   },
-  deleteBtnText: { color: '#DC2626', fontSize: 13, fontWeight: '500' },
+  deleteBtnText: { color: Colors.disciplineRed, fontSize: 13, fontWeight: '500' },
   empty: {
     paddingVertical: 32,
     alignItems: 'center',
     backgroundColor: Colors.white,
-    borderRadius: 8,
+    borderRadius: Radius.sm,
     borderWidth: 1,
     borderColor: Colors.border,
   },

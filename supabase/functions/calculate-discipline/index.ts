@@ -73,6 +73,34 @@ function calculateJournalScore(journal: {
   return entryCompleted + tradeRationale + biasCheck;
 }
 
+// ─── Step 4: principle_compliance 텍스트 → 준수율 변환 ───
+// 'kept'=100% / 'partial'=50% / 'broken'=0% / null=기존 principle_checks 폴백
+
+function resolvePrincipleCompliance(
+  principleComplianceText: string | null | undefined,
+  principleChecks: Record<string, boolean>,
+): number {
+  if (principleComplianceText === 'kept')    return 1.0;
+  if (principleComplianceText === 'partial') return 0.5;
+  if (principleComplianceText === 'broken')  return 0.0;
+  // null/undefined → 기존 principle_checks JSONB 폴백
+  const values = Object.values(principleChecks) as boolean[];
+  return values.length > 0
+    ? values.filter(Boolean).length / values.length
+    : 1;
+}
+
+// ─── Step 4: trade_reason_tags → trade_rationale boolean 변환 ───
+// tags 배열이 비어 있지 않으면 매매이유 기록 완료로 판정
+
+function resolveTradeRationale(
+  existingTradeRationale: boolean,
+  tradeReasonTags: string[] | null | undefined,
+): boolean {
+  if (Array.isArray(tradeReasonTags) && tradeReasonTags.length > 0) return true;
+  return existingTradeRationale;
+}
+
 // ─── Step 4: Principle Score (LOCKED) ───
 
 function calculatePrincipleScore(principle: {
@@ -174,23 +202,27 @@ serve(async (req: Request) => {
 
     // Journal Score
     const journalExists = !!journal;
+
+    // trade_reason_tags (J01 신규 필드) → trade_rationale 판정 보강
+    const tradeReasonTags: string[] | null = journal?.trade_reason_tags ?? null;
+    const tradeRationale = resolveTradeRationale(!!journal?.trade_rationale, tradeReasonTags);
+
     const jScore = journalExists
       ? calculateJournalScore({
           entry_completed: true,
-          trade_rationale: !!journal.trade_rationale,
+          trade_rationale: tradeRationale,
           bias_check: journal.bias_check,
         })
       : 0;
 
     // Principle Score
     // 당일 매매 없음 → entry_rule = true, exit_rule = true (LOCKED 엣지 케이스)
-    const noTrade = !journal || journal.trade_action === 'none';
-    const principleChecks = journal?.principle_checks ?? {};
-    const principleValues = Object.values(principleChecks) as boolean[];
-    const principleCompliance =
-      principleValues.length > 0
-        ? principleValues.filter(Boolean).length / principleValues.length
-        : 1;
+    const noTrade = !journal || journal.trade_action === 'none' || journal.has_trade === false;
+
+    // principle_compliance (J01 신규 필드) → 준수율 우선 사용, 없으면 principle_checks 폴백
+    const principleComplianceText: string | null = journal?.principle_compliance ?? null;
+    const principleChecks: Record<string, boolean> = journal?.principle_checks ?? {};
+    const principleCompliance = resolvePrincipleCompliance(principleComplianceText, principleChecks);
 
     const pScore = calculatePrincipleScore({
       entry_rule: noTrade ? true : principleCompliance >= 0.5,
@@ -248,6 +280,10 @@ serve(async (req: Request) => {
             has_fomo_alert: hasFomoAlert,
             has_trade_after_fomo: hasTradeAfterFomo,
             emotion_checkin: emotionCheckin,
+            principle_compliance_text: principleComplianceText,
+            principle_compliance_ratio: principleCompliance,
+            trade_reason_tags: tradeReasonTags,
+            trade_rationale_resolved: tradeRationale,
           },
         },
         { onConflict: 'user_id,log_date' },

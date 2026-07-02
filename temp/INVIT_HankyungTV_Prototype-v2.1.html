@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INVIT × 한국경제TV — Prototype v2.1</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   DESIGN SYSTEM
+═══════════════════════════════════════ */
+:root,[data-theme="light"]{
+  --bg:#f4f3ef;--surface:#ffffff;--surface-2:#f8f7f4;--surface-off:#edebe6;
+  --border:#d3d0c9;--divider:#e4e2dc;
+  --text:#1a1816;--muted:#78756e;--faint:#b8b6b0;
+  --primary:#007880;--primary-h:#005c63;--primary-hl:#cde8ea;--primary-light:#e6f3f5;
+  --gold:#b87200;--gold-h:#966000;--gold-hl:#efe0b0;--gold-light:#fdf7e4;
+  --red:#c03030;--red-hl:#fce8e8;--red-light:#fff2f2;
+  --blue:#005a8a;--blue-hl:#c4dcea;--blue-light:#e8f2f9;
+  --green:#387018;--green-hl:#d0e4c8;--green-light:#edf6e6;
+  --orange:#c05800;--orange-hl:#f0d8b8;
+  --shadow-sm:0 1px 4px rgba(0,0,0,.07);
+  --shadow-md:0 4px 20px rgba(0,0,0,.09);
+  --shadow-lg:0 12px 48px rgba(0,0,0,.13);
+  --r-sm:8px;--r-md:14px;--r-lg:18px;--r-xl:22px;
+}
+[data-theme="dark"]{
+  --bg:#070706;--surface:#101010;--surface-2:#161514;--surface-off:#1b1a18;
+  --border:#242220;--divider:#1d1c1a;
+  --text:#e6e3de;--muted:#76736c;--faint:#363330;
+  --primary:#3a9aa5;--primary-h:#1e7e8a;--primary-hl:#12282b;--primary-light:#0b1c1e;
+  --gold:#cc9828;--gold-h:#aa7e20;--gold-hl:#2a2008;--gold-light:#181200;
+  --red:#dc6868;--red-hl:#2a1010;--red-light:#1a0a0a;
+  --blue:#4588bc;--blue-hl:#102030;--blue-light:#0a1520;
+  --green:#549830;--green-hl:#102008;--green-light:#081400;
+  --orange:#d88848;--orange-hl:#281808;
+  --shadow-sm:0 1px 4px rgba(0,0,0,.5);
+  --shadow-md:0 4px 20px rgba(0,0,0,.6);
+  --shadow-lg:0 12px 48px rgba(0,0,0,.72);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{font-family:'Satoshi',system-ui,sans-serif;font-size:14px;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
+
+/* ═══ SITE HEADER ═══ */
+.site-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 28px;background:var(--surface);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:200;backdrop-filter:blur(16px);
+}
+.logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;letter-spacing:-.4px}
+.logo-mark{
+  width:34px;height:34px;border-radius:9px;
+  background:linear-gradient(135deg,var(--primary),var(--blue));
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:900;color:#fff;
+}
+.hdr-badge{font-size:9px;font-weight:800;color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:3px 9px;text-transform:uppercase;letter-spacing:.5px}
+.theme-btn{background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:5px 13px;cursor:pointer;color:var(--muted);font-size:13px;transition:all .2s}
+.theme-btn:hover{color:var(--text);border-color:var(--primary)}
+
+/* ═══ MAIN LAYOUT ═══ */
+.main{max-width:1440px;margin:0 auto;padding:24px}
+
+/* ═══ TOP TABS ═══ */
+.top-tabs{display:flex;gap:4px;margin-bottom:28px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:5px;overflow-x:auto}
+.tt-btn{flex:1;min-width:130px;padding:9px 14px;border:none;background:transparent;border-radius:8px;font-family:inherit;font-size:11px;font-weight:800;color:var(--muted);cursor:pointer;transition:all .2s;white-space:nowrap;display:flex;align-items:center;gap:5px;justify-content:center}
+.tt-btn:hover{color:var(--text);background:var(--surface-2)}
+.tt-btn.on{background:var(--primary-hl);color:var(--primary)}
+.tab-panel{display:none}.tab-panel.on{display:block;animation:up .22s ease}
+@keyframes up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══ PHONE SHELL ═══ */
+.phone-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:24px;justify-items:center}
+.phone-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;max-width:310px;width:100%}
+.phone{width:295px;background:var(--surface);border-radius:38px;border:7px solid var(--border);box-shadow:var(--shadow-lg);overflow:hidden;position:relative}
+.notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:68px;height:20px;background:var(--bg);border-radius:10px;z-index:10}
+.screen{height:620px;overflow-y:auto;background:var(--bg);padding-top:34px;scrollbar-width:none}
+.screen::-webkit-scrollbar{display:none}
+.phone-lbl{font-size:10px;font-weight:800;color:var(--muted);text-align:center;letter-spacing:.3px}
+
+/* ═══ APP CHROME ═══ */
+.app-bar{padding:12px 14px 9px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between}
+.ab-title{font-size:15px;font-weight:900;letter-spacing:-.3px}
+.ab-sub{font-size:9px;color:var(--muted);margin-top:1px}
+.ab-right{display:flex;align-items:center;gap:8px}
+
+.body{padding:10px 12px 80px}
+
+/* Bottom Nav */
+.bot-nav{position:absolute;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;padding:5px 0 14px}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 0;font-size:8px;font-weight:800;color:var(--muted);cursor:pointer;transition:color .2s;letter-spacing:.2px}
+.bn.on{color:var(--primary)}
+.bn-i{font-size:17px;line-height:1}
+
+/* ═══ SHARED COMPONENTS ═══ */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);margin-bottom:8px}
+.card-p{padding:12px}
+.sec-lbl{font-size:8px;font-weight:900;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);margin:12px 0 7px}
+.pill{display:inline-flex;align-items:center;gap:3px;font-size:8px;font-weight:900;padding:3px 8px;border-radius:20px}
+
+/* ═══════════════════════════
+   SCREEN 1 : HOME
+   장 시간대별 다이나믹 홈
+═══════════════════════════ */
+
+/* 시간대 타임라인 */
+.time-bar{
+  display:flex;gap:0;overflow-x:auto;margin-bottom:10px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:6px;
+  scrollbar-width:none;
+}
+.time-bar::-webkit-scrollbar{display:none}
+.time-slot{
+  flex-shrink:0;min-width:62px;padding:6px 8px;border-radius:8px;
+  text-align:center;cursor:pointer;transition:all .2s;position:relative;
+}
+.time-slot.active{background:var(--primary-hl)}
+.time-slot .ts-time{font-size:9px;font-weight:900;color:var(--muted);letter-spacing:.3px}
+.time-slot.active .ts-time{color:var(--primary)}
+.time-slot .ts-label{font-size:8px;font-weight:700;color:var(--faint);margin-top:2px;line-height:1.2}
+.time-slot.active .ts-label{color:var(--primary)}
+.time-slot .ts-dot{
+  width:5px;height:5px;border-radius:50%;background:var(--faint);
+  margin:4px auto 0;
+}
+.time-slot.active .ts-dot{background:var(--primary)}
+.time-slot.done .ts-dot{background:var(--green)}
+
+/* 장 상태 배너 */
+.market-banner{
+  border-radius:var(--r-md);padding:12px 14px;margin-bottom:8px;
+  position:relative;overflow:hidden;
+}
+.mb-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.mb-phase{font-size:9px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
+.mb-time{font-size:9px;font-weight:700;color:var(--muted)}
+.mb-title{font-size:14px;font-weight:900;margin-bottom:4px;line-height:1.3}
+.mb-desc{font-size:10px;line-height:1.5}
+.mb-principle{
+  margin-top:8px;background:rgba(255,255,255,.06);
+  border-radius:8px;padding:8px 10px;
+  font-size:10px;font-weight:700;line-height:1.4;
+  border-left:3px solid var(--primary);
+}
+.mb-principle span{font-size:9px;font-weight:800;color:var(--primary);display:block;margin-bottom:3px}
+
+/* 어제 규율점수 + 주간편향 */
+.yesterday-row{display:flex;gap:7px;margin-bottom:8px}
+.yday-card{
+  flex:1;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:10px 12px;
+}
+.yday-lbl{font-size:8px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.yday-val{font-size:22px;font-weight:900;letter-spacing:-1px;line-height:1}
+.yday-sub{font-size:9px;color:var(--muted);margin-top:3px}
+.yday-delta{font-size:9px;font-weight:800;margin-top:4px;display:inline-flex;align-items:center;gap:2px;padding:2px 6px;border-radius:10px}
+
+.bias-summary{
+  flex:1;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:10px 12px;
+}
+.bias-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.bias-type-pill{font-size:8px;font-weight:900;padding:3px 7px;border-radius:10px}
+.bias-mini-bar{display:flex;flex-direction:column;gap:4px}
+.bmb-row{display:flex;align-items:center;gap:6px}
+.bmb-name{font-size:8px;font-weight:700;width:44px;flex-shrink:0;color:var(--muted)}
+.bmb-track{flex:1;height:4px;background:var(--surface-off);border-radius:2px;overflow:hidden}
+.bmb-fill{height:100%;border-radius:2px}
+.bmb-fill.fomo{background:var(--red)}
+.bmb-fill.loss{background:var(--blue)}
+.bmb-fill.over{background:var(--gold)}
+.bmb-fill.herd{background:var(--orange)}
+
+/* 코칭 블록 */
+.coaching-block{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:12px;margin-bottom:8px;cursor:pointer;
+  transition:border-color .2s;
+}
+.coaching-block:hover{border-color:var(--primary)}
+.cb-head{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.cb-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.cb-title{font-size:11px;font-weight:800}
+.cb-sub{font-size:9px;color:var(--muted);margin-top:1px}
+.cb-body{font-size:10px;color:var(--muted);line-height:1.5}
+
+/* 과거 유사 매매 */
+.similar-trade{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px;
+}
+.st-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.st-title{font-size:10px;font-weight:800}
+.st-badge{font-size:8px;font-weight:800;padding:2px 7px;border-radius:8px;background:var(--gold-hl);color:var(--gold)}
+.st-item{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:6px 0;border-bottom:1px solid var(--divider);
+}
+.st-item:last-child{border-bottom:none}
+.st-date{font-size:9px;font-weight:700;color:var(--muted);white-space:nowrap;flex-shrink:0;width:40px}
+.st-desc{font-size:10px;flex:1;line-height:1.4}
+.st-result{font-size:9px;font-weight:900;padding:2px 6px;border-radius:5px;flex-shrink:0}
+.st-result.win{background:var(--green-hl);color:var(--green)}
+.st-result.lose{background:var(--red-hl);color:var(--red)}
+.st-lesson{
+  font-size:9px;color:var(--muted);line-height:1.4;
+  border-left:2px solid var(--primary);padding-left:7px;margin-top:6px;
+}
+
+/* 보유종목 뉴스 */
+.holdings-news{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px}
+.hn-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.hn-title{font-size:10px;font-weight:800}
+.hn-more{font-size:9px;font-weight:800;color:var(--primary)}
+.hn-item{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--divider)}
+.hn-item:last-child{border-bottom:none}
+.hn-ticker{font-size:9px;font-weight:900;color:var(--primary);width:44px;flex-shrink:0}
+.hn-news{font-size:10px;flex:1;line-height:1.3}
+.hn-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.hn-dot.hot{background:var(--red)}
+.hn-dot.mid{background:var(--gold)}
+.hn-dot.low{background:var(--faint)}
+
+/* 바로가기 배너 */
+.shortcut-row{display:flex;gap:6px;margin-bottom:8px}
+.sc-banner{
+  flex:1;border-radius:var(--r-md);padding:10px 10px;
+  display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+  cursor:pointer;transition:opacity .2s;border:1px solid transparent;
+}
+.sc-banner:hover{opacity:.88}
+.sc-icon{font-size:18px}
+.sc-name{font-size:9px;font-weight:900;line-height:1.2}
+.sc-sub{font-size:8px;font-weight:700;opacity:.8;line-height:1.2}
+
+/* ═══════════════════════════
+   SCREEN 2 : 뉴스컨텐츠
+═══════════════════════════ */
+
+/* 고정 4탭 — 스크롤 없음 */
+.news-fixed-tabs{
+  display:flex;gap:3px;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:6px 8px 0;position:sticky;top:45px;z-index:4;
+}
+.nft{
+  flex:1;padding:6px 4px 8px;border:none;background:transparent;
+  font-family:inherit;font-size:9px;font-weight:800;color:var(--muted);
+  cursor:pointer;border-bottom:2px solid transparent;
+  white-space:nowrap;transition:all .2s;text-align:center;
+}
+.nft.on{color:var(--primary);border-bottom-color:var(--primary)}
+
+/* 뉴스 컨텐츠 카드 */
+.news-section{padding:10px 12px 80px}
+.ns-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:12px}
+.ns-title{font-size:9px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1.4px}
+.ns-more{font-size:9px;font-weight:800;color:var(--primary)}
+
+.news-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);overflow:hidden;margin-bottom:8px;cursor:pointer;
+  transition:border-color .2s;
+}
+.news-card:hover{border-color:var(--gold)}
+.news-thumb{height:88px;position:relative;display:flex;align-items:center;justify-content:center}
+.nt-src{position:absolute;top:7px;left:7px;background:var(--gold);color:#fff;font-size:7px;font-weight:900;padding:2px 6px;border-radius:4px}
+.nt-type{position:absolute;top:7px;right:7px;color:#fff;font-size:7px;font-weight:900;padding:2px 6px;border-radius:4px}
+.nt-play{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--primary);box-shadow:var(--shadow-md)}
+.news-body{padding:8px 10px}
+.news-title{font-size:11px;font-weight:700;line-height:1.4;margin-bottom:4px}
+.news-meta{font-size:9px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.news-tags{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.ntag{font-size:8px;font-weight:700;background:var(--surface-off);border-radius:4px;padding:2px 6px;color:var(--muted)}
+.ntag.hot{background:var(--red-hl);color:var(--red)}
+.ntag.new{background:var(--primary-hl);color:var(--primary)}
+
+/* ═══════════════════════════
+   SCREEN 3 : K TOP 10
+═══════════════════════════ */
+.ktop-hero{
+  background:linear-gradient(135deg,var(--gold-hl),var(--gold-light));
+  border-radius:var(--r-md);padding:12px 13px;margin-bottom:8px;
+}
+.ktop-hero-title{font-size:14px;font-weight:900;color:var(--gold);letter-spacing:-.3px}
+.ktop-hero-sub{font-size:9px;color:var(--muted);margin-top:2px}
+.ktop-update{font-size:8px;font-weight:800;color:var(--gold);margin-top:6px;display:flex;align-items:center;gap:4px}
+
+.sector-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);margin-bottom:8px;overflow:hidden;cursor:pointer;
+  transition:border-color .2s;
+}
+.sector-card:hover{border-color:var(--gold)}
+.sc-header{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  border-bottom:1px solid var(--divider);
+}
+.sc-rank{
+  width:24px;height:24px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:900;flex-shrink:0;
+}
+.sc-rank.t1{background:var(--gold);color:#fff}
+.sc-rank.t2{background:var(--faint);color:var(--surface)}
+.sc-rank.t3{background:var(--orange-hl);color:var(--orange)}
+.sc-rank.rest{background:var(--surface-off);color:var(--muted)}
+.sc-name{font-size:12px;font-weight:800;flex:1}
+.sc-sector-tag{font-size:8px;font-weight:700;color:var(--muted)}
+.sc-change{font-size:13px;font-weight:900}
+.sc-change.up{color:var(--red)}
+.sc-change.dn{color:var(--blue)}
+
+.sc-body{padding:8px 12px}
+.sc-etf-title{font-size:8px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.sc-etf-row{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--divider)}
+.sc-etf-row:last-child{border-bottom:none}
+.etf-name{font-size:10px;font-weight:700;flex:1}
+.etf-code{font-size:8px;font-weight:800;color:var(--muted);width:36px;flex-shrink:0}
+.etf-chg{font-size:10px;font-weight:900;width:36px;text-align:right;flex-shrink:0}
+.etf-chg.up{color:var(--red)}
+.etf-chg.dn{color:var(--blue)}
+.sc-news-row{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 12px;background:var(--surface-2);
+  font-size:9px;color:var(--muted);
+}
+.sc-news-ico{font-size:11px;flex-shrink:0}
+.sc-news-txt{flex:1;line-height:1.3}
+.sc-news-time{font-size:8px;flex-shrink:0;white-space:nowrap}
+
+/* ═══════════════════════════
+   SCREEN 4 : 투자일지
+   자동 아카이빙 + 매매 관리
+═══════════════════════════ */
+.journal-tabs{
+  display:flex;gap:3px;padding:6px 12px;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  position:sticky;top:45px;z-index:4;
+}
+.jt{
+  padding:5px 10px;border-radius:7px;font-size:9px;font-weight:800;
+  cursor:pointer;border:none;background:var(--surface-off);color:var(--muted);transition:all .2s;
+}
+.jt.on{background:var(--primary-hl);color:var(--primary)}
+
+/* 아카이브 자동저장 배너 */
+.archive-banner{
+  background:var(--primary-hl);border:1px solid var(--primary);
+  border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px;
+  display:flex;align-items:center;gap:8px;
+}
+.archive-ico{font-size:18px}
+.archive-desc{font-size:10px;flex:1;line-height:1.4}
+.archive-desc strong{color:var(--primary)}
+
+/* 자동 저장된 오늘 AI 분석 */
+.auto-archive{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);margin-bottom:8px;overflow:hidden;
+}
+.aa-header{
+  background:var(--surface-2);padding:8px 12px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.aa-title{font-size:10px;font-weight:800}
+.aa-time{font-size:8px;color:var(--muted)}
+.aa-body{padding:10px 12px}
+.aa-item{
+  display:flex;align-items:flex-start;gap:7px;
+  padding:5px 0;border-bottom:1px solid var(--divider);
+  font-size:10px;line-height:1.4;
+}
+.aa-item:last-child{border-bottom:none}
+.aa-tag{font-size:8px;font-weight:900;padding:2px 6px;border-radius:4px;flex-shrink:0;margin-top:1px}
+
+/* 매매 기록 입력 */
+.trade-form{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:12px;margin-bottom:8px;
+}
+.tf-title{font-size:10px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.tf-tabs{display:flex;gap:4px;margin-bottom:10px}
+.tf-tab{
+  padding:5px 11px;border-radius:6px;font-size:9px;font-weight:800;
+  border:none;cursor:pointer;background:var(--surface-off);color:var(--muted);
+}
+.tf-tab.buy{background:var(--red-hl);color:var(--red)}
+.tf-tab.sell{background:var(--blue-hl);color:var(--blue)}
+.tf-tab.hold{background:var(--gold-hl);color:var(--gold)}
+.tf-row{display:flex;gap:6px;margin-bottom:7px}
+.tf-input{
+  flex:1;border:1px solid var(--border);border-radius:7px;
+  padding:7px 10px;font-family:inherit;font-size:11px;
+  background:var(--surface-2);color:var(--text);outline:none;
+}
+.tf-input:focus{border-color:var(--primary)}
+.tf-label{font-size:9px;font-weight:800;color:var(--muted);margin-bottom:3px}
+.tf-save{
+  width:100%;padding:10px;background:var(--primary);color:#fff;
+  border:none;border-radius:9px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;
+  margin-top:4px;
+}
+
+/* 보유종목 관리 */
+.holding-list{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);margin-bottom:8px;overflow:hidden}
+.hl-header{background:var(--surface-2);padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.hl-title{font-size:10px;font-weight:800}
+.hl-add{font-size:9px;font-weight:800;color:var(--primary);background:var(--primary-hl);padding:3px 8px;border-radius:6px;cursor:pointer;border:none}
+.holding-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--divider)}
+.holding-item:last-child{border-bottom:none}
+.hi-ticker{font-size:11px;font-weight:900;color:var(--primary);width:50px;flex-shrink:0}
+.hi-name{font-size:10px;color:var(--muted);flex:1}
+.hi-qty{font-size:10px;font-weight:700;text-align:right;flex-shrink:0}
+.hi-pnl{font-size:10px;font-weight:900;padding:2px 6px;border-radius:5px;flex-shrink:0}
+.hi-pnl.gain{background:var(--red-hl);color:var(--red)}
+.hi-pnl.loss{background:var(--blue-hl);color:var(--blue)}
+.hi-edit{font-size:12px;color:var(--faint);cursor:pointer;flex-shrink:0;padding:0 4px}
+
+/* 일지 히스토리 */
+.jh-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--divider)}
+.jh-item:last-child{border-bottom:none}
+.jh-date{font-size:9px;font-weight:800;color:var(--muted);width:44px;flex-shrink:0}
+.jh-emo{font-size:15px;flex-shrink:0}
+.jh-body{flex:1}
+.jh-desc{font-size:10px;line-height:1.4}
+.jh-tags{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.jh-tag{font-size:8px;font-weight:700;padding:2px 5px;border-radius:4px}
+.jh-score{font-size:9px;font-weight:900;padding:2px 6px;border-radius:5px;flex-shrink:0;align-self:flex-start}
+.jh-score.hi{background:var(--green-hl);color:var(--green)}
+.jh-score.md{background:var(--gold-hl);color:var(--gold)}
+.jh-score.lo{background:var(--red-hl);color:var(--red)}
+
+/* 감정 & 원칙 기록 (빠른 입력) */
+.quick-log{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px}
+.ql-title{font-size:10px;font-weight:800;margin-bottom:8px}
+.emo-row{display:flex;justify-content:space-between;gap:3px;margin-bottom:8px}
+.emo-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 3px;border-radius:8px;background:transparent;border:2px solid transparent;cursor:pointer;transition:all .2s}
+.emo-btn.sel{border-color:var(--primary);background:var(--primary-light)}
+.emo-i{font-size:20px}
+.emo-t{font-size:7px;font-weight:800;color:var(--muted)}
+
+.principle-list{margin-bottom:8px}
+.p-item{display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid var(--divider)}
+.p-item:last-child{border-bottom:none}
+.p-check{width:18px;height:18px;border-radius:5px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:transparent;flex-shrink:0;transition:all .2s}
+.p-check.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.p-text{font-size:10px;flex:1;line-height:1.3}
+
+/* ═══════════════════════════
+   SCREEN 5 : 투자 분석
+   일지별 / 주간 / 월간
+═══════════════════════════ */
+.analysis-tabs{display:flex;gap:4px;padding:6px 12px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:45px;z-index:4}
+.at{padding:5px 12px;border-radius:7px;font-size:9px;font-weight:800;cursor:pointer;border:none;background:var(--surface-off);color:var(--muted);transition:all .2s}
+.at.on{background:var(--primary-hl);color:var(--primary)}
+
+/* 분석 카드 */
+.analysis-hero{background:linear-gradient(135deg,var(--primary-hl),var(--primary-light));border-radius:var(--r-md);padding:14px;margin-bottom:8px}
+.ah-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.ah-avatar{width:40px;height:40px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff}
+.ah-name{font-size:13px;font-weight:800}
+.ah-type{font-size:9px;color:var(--primary);font-weight:800;margin-top:1px}
+.ah-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.ah-stat{background:rgba(255,255,255,.06);border-radius:8px;padding:7px;text-align:center}
+.ah-stat-val{font-size:14px;font-weight:900;color:var(--primary)}
+.ah-stat-lbl{font-size:7px;font-weight:800;color:var(--muted);margin-top:2px;line-height:1.3}
+
+.bias-chart{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px}
+.bc-title{font-size:10px;font-weight:800;margin-bottom:8px}
+.bc-row{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.bc-lbl{font-size:9px;font-weight:700;width:52px;flex-shrink:0}
+.bc-track{flex:1;height:6px;background:var(--surface-off);border-radius:3px;overflow:hidden}
+.bc-fill{height:100%;border-radius:3px}
+.bc-val{font-size:9px;font-weight:900;width:24px;text-align:right}
+
+/* 주간 D-Score 차트 */
+.weekly-chart{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px}
+.wc-title{font-size:10px;font-weight:800;margin-bottom:10px}
+.wc-bars{display:flex;align-items:flex-end;gap:5px;height:60px}
+.wc-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.wc-bar{width:100%;border-radius:3px 3px 0 0;min-height:4px}
+.wc-lbl{font-size:8px;color:var(--muted)}
+.wc-val{font-size:8px;font-weight:800;color:var(--muted)}
+
+/* AI 주간 리포트 */
+.ai-report{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;margin-bottom:8px}
+.ar-title{font-size:10px;font-weight:800;margin-bottom:8px}
+.ar-item{padding:6px 0;border-bottom:1px solid var(--divider);font-size:10px;line-height:1.5}
+.ar-item:last-child{border-bottom:none}
+.ar-tag{font-size:8px;font-weight:900;padding:2px 6px;border-radius:4px;margin-right:5px}
+
+/* 월간 히트맵 */
+.monthly-heatmap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px}
+.mh-title{font-size:10px;font-weight:800;margin-bottom:8px}
+.heatmap-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.hm-cell{aspect-ratio:1;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;cursor:pointer}
+.hm-cell.empty{background:var(--surface-off)}
+.hm-cell.lv0{background:var(--surface-off);color:var(--faint)}
+.hm-cell.lv1{background:var(--green-hl);color:var(--green)}
+.hm-cell.lv2{background:var(--green);color:#fff;opacity:.7}
+.hm-cell.lv3{background:var(--green);color:#fff}
+.hm-cell.lo{background:var(--gold-hl);color:var(--gold)}
+.hm-cell.bad{background:var(--red-hl);color:var(--red)}
+
+/* ═══════════════════════════
+   SCREEN 6 : FOMO 경보
+   원칙 + 과거일지 행동 가이드
+═══════════════════════════ */
+.fomo-alert-banner{
+  background:linear-gradient(135deg,var(--red-hl),var(--orange-hl));
+  border:2px solid var(--red);border-radius:var(--r-md);padding:12px 14px;margin-bottom:8px;
+  position:relative;overflow:hidden;
+}
+.fomo-alert-banner::before{content:'⚠';position:absolute;right:10px;top:8px;font-size:44px;opacity:.12}
+.fab-badge{display:inline-flex;align-items:center;gap:4px;background:var(--red);color:#fff;font-size:8px;font-weight:900;padding:3px 8px;border-radius:20px;margin-bottom:8px}
+.fab-title{font-size:13px;font-weight:900;color:var(--red);margin-bottom:5px}
+.fab-desc{font-size:10px;line-height:1.5;margin-bottom:10px}
+.fab-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.fab-stat{background:var(--surface);border-radius:8px;padding:8px;text-align:center}
+.fab-stat-val{font-size:16px;font-weight:900;color:var(--red)}
+.fab-stat-lbl{font-size:8px;color:var(--muted);margin-top:1px}
+
+/* 핵심: 원칙 대입 행동 가이드 */
+.action-guide{
+  background:var(--surface);border:2px solid var(--primary);
+  border-radius:var(--r-md);padding:12px;margin-bottom:8px;
+}
+.ag-header{display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.ag-icon{font-size:18px}
+.ag-title{font-size:11px;font-weight:900}
+.ag-sub{font-size:9px;color:var(--muted);margin-top:1px}
+.ag-steps{display:flex;flex-direction:column;gap:6px}
+.ag-step{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:7px 9px;background:var(--surface-2);border-radius:8px;
+}
+.ag-step-num{
+  width:18px;height:18px;border-radius:50%;background:var(--primary);color:#fff;
+  font-size:9px;font-weight:900;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:1px;
+}
+.ag-step-text{font-size:10px;line-height:1.4;flex:1}
+.ag-step-text strong{color:var(--primary)}
+
+/* 과거 유사 상황 분석 */
+.past-analysis{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px}
+.pa-title{font-size:10px;font-weight:800;margin-bottom:8px}
+.pa-item{padding:7px 0;border-bottom:1px solid var(--divider)}
+.pa-item:last-child{border-bottom:none}
+.pa-row{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.pa-date{font-size:9px;font-weight:800;color:var(--muted)}
+.pa-cond{font-size:9px;font-weight:700;flex:1}
+.pa-result{font-size:9px;font-weight:900;padding:2px 6px;border-radius:4px}
+.pa-result.bad{background:var(--red-hl);color:var(--red)}
+.pa-result.ok{background:var(--green-hl);color:var(--green)}
+.pa-lesson{font-size:9px;color:var(--muted);line-height:1.4;border-left:2px solid var(--border);padding-left:6px;margin-top:3px}
+
+/* 한경TV 연계 */
+.tv-link{
+  background:var(--gold-hl);border:1px solid var(--gold);
+  border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px;
+  display:flex;align-items:center;gap:8px;cursor:pointer;
+}
+.tvl-icon{font-size:20px}
+.tvl-body{flex:1}
+.tvl-title{font-size:10px;font-weight:800;color:var(--gold)}
+.tvl-desc{font-size:9px;color:var(--muted);margin-top:2px;line-height:1.3}
+.tvl-arrow{font-size:14px;color:var(--gold)}
+
+/* ═══ B2B WEB PANEL ═══ */
+.b2b-wrap{padding:0}
+.b2b-top{background:linear-gradient(135deg,var(--surface),var(--surface-2));border:1px solid var(--border);border-radius:var(--r-xl);padding:24px 28px;margin-bottom:22px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.b2b-top h1{font-size:20px;font-weight:900;letter-spacing:-.4px;margin-bottom:3px}
+.b2b-top p{font-size:12px;color:var(--muted)}
+.b2b-badges{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.b2b-badge{font-size:9px;font-weight:800;padding:4px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted);display:flex;align-items:center;gap:4px}
+.b2b-badge.live{border-color:var(--green);color:var(--green);background:var(--green-hl)}
+
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.sg-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;transition:border-color .2s}
+.sg-card:hover{border-color:var(--primary)}
+.sg-lbl{font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.sg-badge{font-size:8px;font-weight:800;padding:2px 7px;border-radius:8px}
+.sg-val{font-size:28px;font-weight:900;letter-spacing:-1px;line-height:1}
+.sg-meta{font-size:10px;color:var(--muted);margin-top:5px}
+.sg-delta{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;margin-top:6px;padding:2px 7px;border-radius:10px}
+.sg-delta.up{background:var(--green-hl);color:var(--green)}
+.sg-delta.dn{background:var(--red-hl);color:var(--red)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.panel-head{padding:14px 18px;background:var(--surface-2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.ph-title{font-size:12px;font-weight:800}
+.ph-sub{font-size:9px;color:var(--muted);margin-top:2px}
+.ph-badge{font-size:8px;font-weight:800;padding:2px 8px;border-radius:8px}
+.ph-badge.daily{background:var(--primary-hl);color:var(--primary)}
+.ph-badge.weekly{background:var(--gold-hl);color:var(--gold)}
+.ph-badge.premium{background:var(--green-hl);color:var(--green)}
+.panel-body{padding:16px 18px}
+
+.report-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--divider)}
+.report-item:last-child{border-bottom:none}
+.ri-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.ri-title{font-size:11px;font-weight:800;margin-bottom:2px}
+.ri-desc{font-size:10px;color:var(--muted);line-height:1.4}
+.ri-meta{font-size:9px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:6px}
+.ri-tag{font-size:8px;font-weight:800;padding:2px 6px;border-radius:4px}
+
+.metric-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--divider)}
+.metric-row:last-child{border-bottom:none}
+.mr-lbl{font-size:11px;color:var(--muted)}
+.mr-val{font-size:12px;font-weight:800}
+
+.ir-plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.ir-plan{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:18px;position:relative;transition:border-color .2s}
+.ir-plan:hover{border-color:var(--primary)}
+.ir-plan.rec{border:2px solid var(--primary)}
+.ir-plan.rec::before{content:'추천';position:absolute;top:-9px;right:16px;background:var(--primary);color:#fff;font-size:8px;font-weight:900;padding:2px 9px;border-radius:8px}
+.ip-name{font-size:12px;font-weight:800;margin-bottom:3px}
+.ip-price{font-size:24px;font-weight:900;color:var(--primary)}
+.ip-price span{font-size:11px;font-weight:500;color:var(--muted)}
+.ip-yr{font-size:9px;color:var(--muted);margin-top:1px;margin-bottom:12px}
+.ip-feat{display:flex;align-items:flex-start;gap:5px;font-size:10px;padding:4px 0;border-top:1px solid var(--divider)}
+.ip-feat:first-of-type{border-top:none;padding-top:0}
+.ip-ico{flex-shrink:0;margin-top:1px}
+.ip-ico.on{color:var(--green)}
+.ip-ico.off{color:var(--faint)}
+.ip-cta{width:100%;margin-top:12px;padding:9px;border:2px solid var(--primary);background:transparent;color:var(--primary);border-radius:9px;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;transition:all .2s}
+.ip-cta:hover,.ir-plan.rec .ip-cta{background:var(--primary);color:#fff}
+
+/* ═══ SEMINAR WEB ═══ */
+.sem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.sem-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;cursor:pointer}
+.sem-banner{padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start}
+.sem-name{font-size:13px;font-weight:900}
+.sem-sub{font-size:9px;color:var(--muted);margin-top:2px}
+.sem-tag{font-size:8px;font-weight:900;padding:3px 7px;border-radius:5px}
+.sem-body{padding:10px 14px}
+.sem-info-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:10px;color:var(--muted)}
+.sem-sponsor{font-size:9px;color:var(--muted);line-height:1.4;margin-top:8px}
+.sem-ctas{display:flex;gap:6px;margin-top:10px}
+.sem-cta{flex:1;padding:7px;border-radius:8px;font-size:10px;font-weight:800;border:none;cursor:pointer}
+.sem-cta.pri{background:var(--gold);color:#fff}
+.sem-cta.out{background:transparent;border:1.5px solid var(--gold);color:var(--gold)}
+
+/* ═══ UTILITY ═══ */
+.text-primary{color:var(--primary)}.text-gold{color:var(--gold)}.text-green{color:var(--green)}.text-red{color:var(--red)}.text-blue{color:var(--blue)}.text-muted{color:var(--muted)}
+.section-head{margin-bottom:20px}
+.sh-tag{font-size:9px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:var(--primary);margin-bottom:4px}
+.sh-title{font-size:20px;font-weight:900;letter-spacing:-.4px}
+.sh-sub{font-size:12px;color:var(--muted);margin-top:3px}
+
+@media(max-width:1100px){.stats-grid{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:1fr 1fr}.ir-plan-grid{grid-template-columns:1fr}.sem-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:800px){.stats-grid{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.sem-grid{grid-template-columns:1fr}.phone-grid{grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo">
+    <div class="logo-mark">IV</div>
+    <span>INVIT × 한국경제TV</span>
+    <span class="hdr-badge">Prototype v2.1</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span style="font-size:10px;color:var(--muted)">2026.04 임원 프레젠테이션</span>
+    <button class="theme-btn" onclick="toggleTheme()">☀</button>
+  </div>
+</header>
+
+<div class="main">
+
+<nav class="top-tabs">
+  <button class="tt-btn on" onclick="switchTab('b2c',this)">📱 B2C 앱</button>
+  <button class="tt-btn" onclick="switchTab('ir',this)">🏢 B2B IR 포털</button>
+  <button class="tt-btn" onclick="switchTab('seminar',this)">🎓 세미나·교육</button>
+</nav>
+
+<!-- ══════════════════════════════════════
+     B2C 앱 — 6개 화면
+══════════════════════════════════════ -->
+<div id="tab-b2c" class="tab-panel on">
+
+  <div class="section-head">
+    <div class="sh-tag">B2C Mobile App</div>
+    <div class="sh-title">INVIT — 투자 행동 OS</div>
+    <div class="sh-sub">장 흐름 연동 코칭 + 한경TV 뉴스컨텐츠 + K TOP 10 + 투자일지 아카이빙</div>
+  </div>
+
+  <div class="phone-grid" style="margin-bottom:28px">
+
+    <!-- ┌──────────────────────────────────
+         PHONE 1 : 홈 — 장 시간대별 동적 홈
+         ──────────────────────────────────┘ -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="app-bar">
+            <div>
+              <div class="ab-title">현우님의 오늘 장 🗓</div>
+              <div class="ab-sub">FOMO Trader · 2026.04.10 금요일</div>
+            </div>
+            <div class="ab-right">
+              <span style="font-size:18px">🔔</span>
+            </div>
+          </div>
+          <div class="body">
+
+            <!-- 장 시간대 타임라인 -->
+            <div class="time-bar">
+              <div class="time-slot done">
+                <div class="ts-time">07:30</div>
+                <div class="ts-label">개장전</div>
+                <div class="ts-dot"></div>
+              </div>
+              <div class="time-slot done">
+                <div class="ts-time">08:50</div>
+                <div class="ts-label">야간마감</div>
+                <div class="ts-dot"></div>
+              </div>
+              <div class="time-slot done">
+                <div class="ts-time">09:30</div>
+                <div class="ts-label">장초반</div>
+                <div class="ts-dot"></div>
+              </div>
+              <div class="time-slot active">
+                <div class="ts-time">11:00</div>
+                <div class="ts-label">장중반</div>
+                <div class="ts-dot"></div>
+              </div>
+              <div class="time-slot">
+                <div class="ts-time">14:30</div>
+                <div class="ts-label">장후반</div>
+                <div class="ts-dot"></div>
+              </div>
+              <div class="time-slot">
+                <div class="ts-time">16:00</div>
+                <div class="ts-label">장마감후</div>
+                <div class="ts-dot"></div>
+              </div>
+            </div>
+
+            <!-- 현재 시간대 장 분석 배너 -->
+            <div class="market-banner" style="background:linear-gradient(135deg,var(--primary-hl),var(--primary-light))">
+              <div class="mb-top">
+                <div class="mb-phase text-primary">📊 장중반 · 11:00 현황</div>
+                <div class="mb-time">업데이트 10:58</div>
+              </div>
+              <div class="mb-title">KOSPI +1.8% 강보합 · 반도체·조선 주도</div>
+              <div class="mb-desc" style="color:var(--muted)">외국인 순매수 전환 +2,340억. 거래량은 전일 대비 +62% 수준. 점심 전 추격 매수 경보 구간.</div>
+              <div class="mb-principle">
+                <span>📌 오늘 적용 원칙</span>
+                "장중반 추격 매수는 반드시 FOMO 체크 후 진행. 분할 매수 원칙 준수. 점심 전 결정은 30분 딜레이 룰."
+              </div>
+            </div>
+
+            <!-- 어제 규율점수 + 주간 편향 -->
+            <div class="yesterday-row">
+              <div class="yday-card">
+                <div class="yday-lbl">어제 규율점수</div>
+                <div class="yday-val text-primary">82</div>
+                <div class="yday-sub">/ 100점</div>
+                <div class="yday-delta" style="background:var(--green-hl);color:var(--green)">▲ +9 전일 대비</div>
+              </div>
+              <div class="bias-summary">
+                <div class="bias-top">
+                  <div class="yday-lbl">주간 편향 분석</div>
+                  <div class="bias-type-pill" style="background:var(--red-hl);color:var(--red)">FOMO↑</div>
+                </div>
+                <div class="bias-mini-bar">
+                  <div class="bmb-row">
+                    <div class="bmb-name">FOMO</div>
+                    <div class="bmb-track"><div class="bmb-fill fomo" style="width:78%"></div></div>
+                  </div>
+                  <div class="bmb-row">
+                    <div class="bmb-name">군집</div>
+                    <div class="bmb-track"><div class="bmb-fill herd" style="width:62%"></div></div>
+                  </div>
+                  <div class="bmb-row">
+                    <div class="bmb-name">손실회피</div>
+                    <div class="bmb-track"><div class="bmb-fill loss" style="width:48%"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- AI 투자 코칭 -->
+            <div class="sec-lbl">🤖 오늘의 AI 투자 코칭</div>
+            <div class="coaching-block">
+              <div class="cb-head">
+                <div class="cb-icon" style="background:var(--primary-hl)">🎯</div>
+                <div>
+                  <div class="cb-title">장중반 FOMO 위험 감지</div>
+                  <div class="cb-sub">개인화 코칭 · 현재 장 상황 기반</div>
+                </div>
+              </div>
+              <div class="cb-body">지금 KOSPI +1.8% 구간은 당신의 FOMO 패턴이 가장 활성화되는 구간입니다. 오전 9시반 이후 추격 매수 3번 중 2번이 손실이었습니다. <strong style="color:var(--primary)">지금은 관망이 원칙</strong>입니다.</div>
+            </div>
+
+            <!-- 오늘과 유사한 과거 매매 분석 -->
+            <div class="sec-lbl">📂 유사 장세 과거 매매 분석</div>
+            <div class="similar-trade">
+              <div class="st-head">
+                <div class="st-title">비슷한 조건 과거 3회 발견</div>
+                <div class="st-badge">KOSPI +1.5~2% 구간</div>
+              </div>
+              <div class="st-item">
+                <div class="st-date">03.15</div>
+                <div class="st-desc">반도체 강세 장중반 삼성전자 추격 매수</div>
+                <div class="st-result lose">-4.2%</div>
+              </div>
+              <div class="st-item">
+                <div class="st-date">02.28</div>
+                <div class="st-desc">외인 순매수 전환 당일 코스닥 추격</div>
+                <div class="st-result lose">-2.8%</div>
+              </div>
+              <div class="st-item">
+                <div class="st-date">01.20</div>
+                <div class="st-desc">조선주 테마 강세 관망 후 오후 진입</div>
+                <div class="st-result win">+3.1%</div>
+              </div>
+              <div class="st-lesson">💡 오전 추격 매수는 손실 확률 66.7%. 오후 2시 이후 진입이 유의미하게 유리했습니다.</div>
+            </div>
+
+            <!-- 보유종목 관련 뉴스 -->
+            <div class="sec-lbl">📰 보유종목 관련 뉴스</div>
+            <div class="holdings-news">
+              <div class="hn-head">
+                <div class="hn-title">삼성전자 · SK하이닉스 · POSCO</div>
+                <div class="hn-more">더보기 →</div>
+              </div>
+              <div class="hn-item">
+                <div class="hn-ticker">삼성전자</div>
+                <div class="hn-news">HBM4 양산 일정 앞당겨 — 엔비디아 공급 가시화</div>
+                <div class="hn-dot hot"></div>
+              </div>
+              <div class="hn-item">
+                <div class="hn-ticker">SK하이닉스</div>
+                <div class="hn-news">외국인 5거래일 연속 순매수 · 목표주가 상향</div>
+                <div class="hn-dot mid"></div>
+              </div>
+              <div class="hn-item">
+                <div class="hn-ticker">POSCO홀딩스</div>
+                <div class="hn-news">철강 업황 부진 지속 — 2분기 실적 우려</div>
+                <div class="hn-dot low"></div>
+              </div>
+            </div>
+
+            <!-- 바로가기 배너 -->
+            <div class="sec-lbl">🔖 바로가기</div>
+            <div class="shortcut-row">
+              <div class="sc-banner" style="background:var(--gold-hl)">
+                <div class="sc-icon">🏆</div>
+                <div class="sc-name text-gold">K TOP 10</div>
+                <div class="sc-sub text-gold">이주 상승 섹터</div>
+              </div>
+              <div class="sc-banner" style="background:var(--primary-hl)">
+                <div class="sc-icon">🎓</div>
+                <div class="sc-name text-primary">교육세미나</div>
+                <div class="sc-sub text-primary">05.16 서울</div>
+              </div>
+              <div class="sc-banner" style="background:var(--green-hl)">
+                <div class="sc-icon">🏢</div>
+                <div class="sc-name text-green">기업서비스</div>
+                <div class="sc-sub text-green">IR 인텔리전스</div>
+              </div>
+            </div>
+
+          </div>
+          <div class="bot-nav">
+            <div class="bn on"><div class="bn-i">🏠</div>홈</div>
+            <div class="bn"><div class="bn-i">📺</div>뉴스컨텐츠</div>
+            <div class="bn"><div class="bn-i">📝</div>일지</div>
+            <div class="bn"><div class="bn-i">📊</div>분석</div>
+            <div class="bn"><div class="bn-i">⚙️</div>설정</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-lbl">① 홈 — 장 시간대별 동적 코칭</div>
+    </div>
+
+    <!-- ┌──────────────────────────────────
+         PHONE 2 : 뉴스컨텐츠
+         ──────────────────────────────────┘ -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="app-bar">
+            <div>
+              <div class="ab-title">📺 뉴스컨텐츠</div>
+              <div class="ab-sub">한경TV × INVIT · 맞춤 큐레이션</div>
+            </div>
+            <div class="ab-right"><span style="font-size:18px">🔍</span></div>
+          </div>
+
+          <!-- 고정 4탭 (스크롤 없음) -->
+          <div class="news-fixed-tabs">
+            <button class="nft on" onclick="switchNewsTab('맞춤뉴스',this)">🎯 맞춤뉴스</button>
+            <button class="nft" onclick="switchNewsTab('ktop',this)">🏆 K TOP 10</button>
+            <button class="nft" onclick="switchNewsTab('premium',this)">✨ 프리미엄</button>
+            <button class="nft" onclick="switchNewsTab('edu',this)">🎓 교육세미나</button>
+          </div>
+
+          <div class="news-section">
+
+            <!-- 맞춤뉴스 섹션 -->
+            <div class="ns-row">
+              <div class="ns-title">📌 보유종목 관련</div>
+              <div class="ns-more">더보기 →</div>
+            </div>
+            <div class="news-card">
+              <div class="news-thumb" style="background:linear-gradient(135deg,var(--primary-hl),var(--blue-hl))">
+                <div class="nt-src">📺 한경TV</div>
+                <div class="nt-type" style="background:var(--primary)">AI 요약</div>
+                <div class="nt-play">▶</div>
+              </div>
+              <div class="news-body">
+                <div class="news-title">삼성전자 HBM4 양산 가속— 엔비디아 공급 가시화, 목표주가 상향</div>
+                <div class="news-meta"><span>28분 전</span><span>·</span><span>조회 15.2만</span></div>
+                <div class="news-tags">
+                  <span class="ntag hot">🔴 보유종목</span>
+                  <span class="ntag">반도체</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ns-row">
+              <div class="ns-title">📐 투자원칙 관련</div>
+              <div class="ns-more">더보기 →</div>
+            </div>
+            <div class="news-card">
+              <div class="news-thumb" style="background:linear-gradient(135deg,var(--gold-hl),var(--orange-hl))">
+                <div class="nt-src">📺 한경TV</div>
+                <div class="nt-type" style="background:var(--gold)">원칙</div>
+                <div class="nt-play">▶</div>
+              </div>
+              <div class="news-body">
+                <div class="news-title">FOMO 매수의 위험— 장중반 추격 매수자의 6개월 수익률 분석</div>
+                <div class="news-meta"><span>2시간 전</span><span>·</span><span>조회 9.1만</span></div>
+                <div class="news-tags">
+                  <span class="ntag">투자심리</span>
+                  <span class="ntag new">내 코칭 연계</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ns-row">
+              <div class="ns-title">🏆 K TOP 10 대표</div>
+              <div class="ns-more">더보기 →</div>
+            </div>
+            <div class="news-card">
+              <div class="news-thumb" style="background:linear-gradient(135deg,var(--gold-hl),var(--gold-light))">
+                <div class="nt-src">📺 한경TV</div>
+                <div class="nt-type" style="background:var(--gold)">섹터분석</div>
+                <div class="nt-play">▶</div>
+              </div>
+              <div class="news-body">
+                <div class="news-title">[K TOP 10] 조선업 8주 연속 1위— HD현대중공업 · 한화오션 ETF 분석</div>
+                <div class="news-meta"><span>오늘</span><span>·</span><span>조회 33.5만</span></div>
+                <div class="news-tags">
+                  <span class="ntag">조선</span>
+                  <span class="ntag hot">🔴 급등</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ns-row">
+              <div class="ns-title">✨ 프리미엄 대표</div>
+              <div class="ns-more">더보기 →</div>
+            </div>
+            <div class="news-card">
+              <div class="news-thumb" style="background:linear-gradient(135deg,var(--green-hl),var(--primary-hl))">
+                <div class="nt-src">📺 한경TV</div>
+                <div class="nt-type" style="background:var(--green)">MZ 전용</div>
+                <div class="nt-play">▶</div>
+              </div>
+              <div class="news-body">
+                <div class="news-title">[MZ 재테크] 월급 300으로 10년 후 10억 만드는 ETF 포트폴리오</div>
+                <div class="news-meta"><span>어제</span><span>·</span><span>조회 44.1만</span></div>
+                <div class="news-tags">
+                  <span class="ntag">MZ</span>
+                  <span class="ntag hot">🔴 인기</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ns-row">
+              <div class="ns-title">🎓 세미나 대표</div>
+              <div class="ns-more">더보기 →</div>
+            </div>
+            <!-- 이벤트 카드 -->
+            <div class="card card-p" style="border-color:var(--gold);cursor:pointer">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+                <span style="font-size:18px">🎓</span>
+                <div>
+                  <div style="font-size:11px;font-weight:900;color:var(--gold)">월급쟁이 재테크 실전</div>
+                  <div style="font-size:9px;color:var(--muted)">MZ 직장인 대상 · 무료</div>
+                </div>
+                <div style="margin-left:auto;font-size:8px;font-weight:900;background:var(--gold);color:#fff;padding:3px 7px;border-radius:5px">HOT</div>
+              </div>
+              <div style="font-size:9px;color:var(--muted);display:flex;gap:10px">
+                <span>📅 05.24 (일)</span>
+                <span>📍 여의도 한경TV</span>
+                <span>👥 잔여 241석</span>
+              </div>
+            </div>
+
+          </div>
+          <div class="bot-nav">
+            <div class="bn"><div class="bn-i">🏠</div>홈</div>
+            <div class="bn on"><div class="bn-i">📺</div>뉴스컨텐츠</div>
+            <div class="bn"><div class="bn-i">📝</div>일지</div>
+            <div class="bn"><div class="bn-i">📊</div>분석</div>
+            <div class="bn"><div class="bn-i">⚙️</div>설정</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-lbl">② 뉴스컨텐츠 — 4탭 고정 + 대표 1개+더보기</div>
+    </div>
+
+    <!-- ┌──────────────────────────────────
+         PHONE 3 : K TOP 10
+         ──────────────────────────────────┘ -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="app-bar">
+            <div>
+              <div class="ab-title">🏆 K TOP 10</div>
+              <div class="ab-sub">한경TV 보도국 주간 섹터 × ETF 분석</div>
+            </div>
+            <div style="font-size:10px;font-weight:800;color:var(--gold)">Vol.18</div>
+          </div>
+          <div class="body">
+
+            <div class="ktop-hero">
+              <div class="ktop-hero-title">K TOP 10 — 이번 주 상승 섹터 TOP 10</div>
+              <div class="ktop-hero-sub">매주 금요일 · 10개 섹터 × ETF TOP 10 · 관련 뉴스 연동</div>
+              <div class="ktop-update">🔄 최종 업데이트: 2026.04.10 장중반 기준</div>
+            </div>
+
+            <!-- 섹터 1위: 조선 -->
+            <div class="sector-card">
+              <div class="sc-header">
+                <div class="sc-rank t1">1</div>
+                <div style="flex:1">
+                  <div class="sc-name">조선업</div>
+                  <div class="sc-sector-tag">중공업 · 국내 수주 최대 기록</div>
+                </div>
+                <div class="sc-change up">+8.2%</div>
+              </div>
+              <div class="sc-body">
+                <div class="sc-etf-title">관련 ETF TOP 3</div>
+                <div class="sc-etf-row">
+                  <div class="etf-code">A458730</div>
+                  <div class="etf-name">TIGER 조선TOP10</div>
+                  <div class="etf-chg up">+9.1%</div>
+                </div>
+                <div class="sc-etf-row">
+                  <div class="etf-code">A395160</div>
+                  <div class="etf-name">KODEX K-조선</div>
+                  <div class="etf-chg up">+8.7%</div>
+                </div>
+                <div class="sc-etf-row">
+                  <div class="etf-code">A315270</div>
+                  <div class="etf-name">HANARO 조선해운</div>
+                  <div class="etf-chg up">+7.4%</div>
+                </div>
+              </div>
+              <div class="sc-news-row">
+                <div class="sc-news-ico">📰</div>
+                <div class="sc-news-txt">HD현대중공업 수주잔고 사상 최대 — 2027년까지 물량 확보</div>
+                <div class="sc-news-time">1시간 전</div>
+              </div>
+            </div>
+
+            <!-- 섹터 2위: 방산 -->
+            <div class="sector-card">
+              <div class="sc-header">
+                <div class="sc-rank t2">2</div>
+                <div style="flex:1">
+                  <div class="sc-name">방산·항공우주</div>
+                  <div class="sc-sector-tag">국방 · NATO 수출 확대 기대</div>
+                </div>
+                <div class="sc-change up">+6.5%</div>
+              </div>
+              <div class="sc-body">
+                <div class="sc-etf-title">관련 ETF TOP 3</div>
+                <div class="sc-etf-row">
+                  <div class="etf-code">A425410</div>
+                  <div class="etf-name">TIGER K-방산</div>
+                  <div class="etf-chg up">+7.2%</div>
+                </div>
+                <div class="sc-etf-row">
+                  <div class="etf-code">A459580</div>
+                  <div class="etf-name">KODEX 방산우주</div>
+                  <div class="etf-chg up">+6.8%</div>
+                </div>
+                <div class="sc-etf-row">
+                  <div class="etf-code">A329200</div>
+                  <div class="etf-name">HANARO K-방산</div>
+                  <div class="etf-chg up">+5.9%</div>
+                </div>
+              </div>
+              <div class="sc-news-row">
+                <div class="sc-news-ico">📰</div>
+                <div class="sc-news-txt">한화에어로스페이스 폴란드 추가 계약 확정 — 2조 규모</div>
+                <div class="sc-news-time">2시간 전</div>
+              </div>
+            </div>
+
+            <!-- 섹터 3위: 반도체 (축약) -->
+            <div class="sector-card">
+              <div class="sc-header">
+                <div class="sc-rank t3">3</div>
+                <div style="flex:1">
+                  <div class="sc-name">반도체</div>
+                  <div class="sc-sector-tag">IT · HBM · AI 수요 확대</div>
+                </div>
+                <div class="sc-change up">+4.7%</div>
+              </div>
+              <div class="sc-body">
+                <div class="sc-etf-title">관련 ETF TOP 2</div>
+                <div class="sc-etf-row">
+                  <div class="etf-code">A091160</div>
+                  <div class="etf-name">KODEX 반도체</div>
+                  <div class="etf-chg up">+5.2%</div>
+                </div>
+                <div class="sc-etf-row">
+                  <div class="etf-code">A228800</div>
+                  <div class="etf-name">TIGER 반도체</div>
+                  <div class="etf-chg up">+4.9%</div>
+                </div>
+              </div>
+              <div class="sc-news-row">
+                <div class="sc-news-ico">📰</div>
+                <div class="sc-news-txt">SK하이닉스 HBM4 공급 계약 체결 · 엔비디아 QB 패키지</div>
+                <div class="sc-news-time">3시간 전</div>
+              </div>
+            </div>
+
+          </div>
+          <div class="bot-nav">
+            <div class="bn"><div class="bn-i">🏠</div>홈</div>
+            <div class="bn on"><div class="bn-i">📺</div>뉴스컨텐츠</div>
+            <div class="bn"><div class="bn-i">📝</div>일지</div>
+            <div class="bn"><div class="bn-i">📊</div>분석</div>
+            <div class="bn"><div class="bn-i">⚙️</div>설정</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-lbl">③ K TOP 10 — 섹터 × ETF × 뉴스</div>
+    </div>
+
+  </div>
+
+  <!-- Row 2 -->
+  <div class="phone-grid">
+
+    <!-- ┌──────────────────────────────────
+         PHONE 4 : 투자일지
+         자동 아카이빙 + 매매 / 보유종목 관리
+         ──────────────────────────────────┘ -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="app-bar">
+            <div>
+              <div class="ab-title">📝 투자일지</div>
+              <div class="ab-sub">자동 아카이빙 · 매매관리 · 원칙기록</div>
+            </div>
+            <div style="font-size:11px;font-weight:700;color:var(--muted)">D+12</div>
+          </div>
+
+          <!-- 일지 서브탭 -->
+          <div class="journal-tabs">
+            <button class="jt on">📅 오늘</button>
+            <button class="jt">📋 기록관리</button>
+            <button class="jt">🗂 히스토리</button>
+          </div>
+
+          <div class="body">
+
+            <!-- 자동 아카이빙 안내 -->
+            <div class="archive-banner">
+              <div class="archive-ico">🤖</div>
+              <div class="archive-desc"><strong>오늘 장 분석 자동 저장됨</strong><br>홈에서 제공된 장 분석·FOMO 경보·AI 코칭이 오늘 일지에 자동 아카이빙됩니다.</div>
+            </div>
+
+            <!-- 자동 저장된 AI 분석 카드 -->
+            <div class="auto-archive">
+              <div class="aa-header">
+                <div class="aa-title">📊 오늘 자동 아카이빙된 분석</div>
+                <div class="aa-time">2026.04.10</div>
+              </div>
+              <div class="aa-body">
+                <div class="aa-item">
+                  <div class="aa-tag" style="background:var(--primary-hl);color:var(--primary)">장분석</div>
+                  KOSPI +1.8% 강보합 · 반도체·조선 주도 · 외인 순매수
+                </div>
+                <div class="aa-item">
+                  <div class="aa-tag" style="background:var(--red-hl);color:var(--red)">FOMO</div>
+                  장중반 추격 매수 FOMO 경보 발령 (14:12)
+                </div>
+                <div class="aa-item">
+                  <div class="aa-tag" style="background:var(--gold-hl);color:var(--gold)">코칭</div>
+                  "지금은 관망이 원칙. 오후 2시 이후 재검토"
+                </div>
+              </div>
+            </div>
+
+            <!-- 감정 체크인 (간단) -->
+            <div class="quick-log">
+              <div class="ql-title">오늘 투자 감정 기록</div>
+              <div class="emo-row">
+                <div class="emo-btn" onclick="selectEmo(this)"><div class="emo-i">😰</div><div class="emo-t">공포</div></div>
+                <div class="emo-btn" onclick="selectEmo(this)"><div class="emo-i">😟</div><div class="emo-t">불안</div></div>
+                <div class="emo-btn sel" onclick="selectEmo(this)"><div class="emo-i">😐</div><div class="emo-t">평정</div></div>
+                <div class="emo-btn" onclick="selectEmo(this)"><div class="emo-i">😊</div><div class="emo-t">흥분</div></div>
+                <div class="emo-btn" onclick="selectEmo(this)"><div class="emo-i">🤑</div><div class="emo-t">탐욕</div></div>
+              </div>
+              <div class="principle-list">
+                <div class="p-item">
+                  <div class="p-check on" onclick="toggleP(this)">✓</div>
+                  <div class="p-text">분할 매수 원칙을 지켰다</div>
+                </div>
+                <div class="p-item">
+                  <div class="p-check on" onclick="toggleP(this)">✓</div>
+                  <div class="p-text">장중반 추격 매수를 하지 않았다</div>
+                </div>
+                <div class="p-item">
+                  <div class="p-check" onclick="toggleP(this)"></div>
+                  <div class="p-text">매수 전 30분 딜레이 룰을 지켰다</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 매매 기록 입력 -->
+            <div class="trade-form">
+              <div class="tf-title">+ 매매 기록 추가</div>
+              <div class="tf-tabs">
+                <button class="tf-tab buy">매수</button>
+                <button class="tf-tab sell">매도</button>
+                <button class="tf-tab hold">보유유지</button>
+              </div>
+              <div style="margin-bottom:5px">
+                <div class="tf-label">종목명 / 종목코드</div>
+                <input class="tf-input" placeholder="예: 삼성전자 / 005930">
+              </div>
+              <div class="tf-row">
+                <div style="flex:1">
+                  <div class="tf-label">수량</div>
+                  <input class="tf-input" placeholder="0">
+                </div>
+                <div style="flex:1">
+                  <div class="tf-label">단가 (원)</div>
+                  <input class="tf-input" placeholder="0">
+                </div>
+              </div>
+              <div style="margin-bottom:5px">
+                <div class="tf-label">매매 이유 (선택)</div>
+                <input class="tf-input" placeholder="왜 이 결정을 했나요?">
+              </div>
+              <button class="tf-save">📌 기록 저장</button>
+            </div>
+
+            <!-- 보유종목 관리 -->
+            <div class="holding-list">
+              <div class="hl-header">
+                <div class="hl-title">📈 보유종목 관리</div>
+                <button class="hl-add">+ 추가</button>
+              </div>
+              <div class="holding-item">
+                <div class="hi-ticker">005930</div>
+                <div class="hi-name">삼성전자</div>
+                <div class="hi-qty" style="color:var(--muted);font-size:9px">100주</div>
+                <div class="hi-pnl gain">+8.2%</div>
+                <div class="hi-edit">✏️</div>
+              </div>
+              <div class="holding-item">
+                <div class="hi-ticker">000660</div>
+                <div class="hi-name">SK하이닉스</div>
+                <div class="hi-qty" style="color:var(--muted);font-size:9px">30주</div>
+                <div class="hi-pnl gain">+12.1%</div>
+                <div class="hi-edit">✏️</div>
+              </div>
+              <div class="holding-item">
+                <div class="hi-ticker">005490</div>
+                <div class="hi-name">POSCO홀딩스</div>
+                <div class="hi-qty" style="color:var(--muted);font-size:9px">20주</div>
+                <div class="hi-pnl loss">-3.4%</div>
+                <div class="hi-edit">✏️</div>
+              </div>
+            </div>
+
+          </div>
+          <div class="bot-nav">
+            <div class="bn"><div class="bn-i">🏠</div>홈</div>
+            <div class="bn"><div class="bn-i">📺</div>뉴스컨텐츠</div>
+            <div class="bn on"><div class="bn-i">📝</div>일지</div>
+            <div class="bn"><div class="bn-i">📊</div>분석</div>
+            <div class="bn"><div class="bn-i">⚙️</div>설정</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-lbl">④ 투자일지 — 자동 아카이빙 + 매매관리</div>
+    </div>
+
+    <!-- ┌──────────────────────────────────
+         PHONE 5 : 투자 분석
+         일지별 / 주간 / 월간
+         ──────────────────────────────────┘ -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="app-bar">
+            <div>
+              <div class="ab-title">📊 투자 분석</div>
+              <div class="ab-sub">일지별 · 주간 · 월간 AI 분석</div>
+            </div>
+          </div>
+
+          <div class="analysis-tabs">
+            <button class="at" onclick="switchAt('daily',this)">📅 일지별</button>
+            <button class="at on" onclick="switchAt('weekly',this)">📆 주간</button>
+            <button class="at" onclick="switchAt('monthly',this)">🗓 월간</button>
+          </div>
+
+          <div class="body">
+
+            <!-- 프로파일 헤더 -->
+            <div class="analysis-hero">
+              <div class="ah-row">
+                <div class="ah-avatar">🔥</div>
+                <div>
+                  <div class="ah-name">김현우</div>
+                  <div class="ah-type">FOMO Trader · 12일 스트릭</div>
+                </div>
+              </div>
+              <div class="ah-stats">
+                <div class="ah-stat">
+                  <div class="ah-stat-val">82</div>
+                  <div class="ah-stat-lbl">주간 평균<br>규율점수</div>
+                </div>
+                <div class="ah-stat">
+                  <div class="ah-stat-val">+6.2%</div>
+                  <div class="ah-stat-lbl">이번주<br>편향 개선율</div>
+                </div>
+                <div class="ah-stat">
+                  <div class="ah-stat-val">3/5</div>
+                  <div class="ah-stat-lbl">원칙준수<br>일수</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 주간 D-Score 차트 -->
+            <div class="weekly-chart">
+              <div class="wc-title">이번 주 규율점수 추이 (D-Score)</div>
+              <div class="wc-bars">
+                <div class="wc-col">
+                  <div class="wc-val">73</div>
+                  <div class="wc-bar" style="height:44px;background:var(--gold)"></div>
+                  <div class="wc-lbl">월</div>
+                </div>
+                <div class="wc-col">
+                  <div class="wc-val">34</div>
+                  <div class="wc-bar" style="height:20px;background:var(--red)"></div>
+                  <div class="wc-lbl">화</div>
+                </div>
+                <div class="wc-col">
+                  <div class="wc-val">91</div>
+                  <div class="wc-bar" style="height:54px;background:var(--green)"></div>
+                  <div class="wc-lbl">수</div>
+                </div>
+                <div class="wc-col">
+                  <div class="wc-val">78</div>
+                  <div class="wc-bar" style="height:47px;background:var(--primary)"></div>
+                  <div class="wc-lbl">목</div>
+                </div>
+                <div class="wc-col">
+                  <div class="wc-val">82</div>
+                  <div class="wc-bar" style="height:49px;background:var(--primary)"></div>
+                  <div class="wc-lbl">금</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 편향 분석 -->
+            <div class="bias-chart">
+              <div class="bc-title">투자 편향 4종 분석 (주간 평균)</div>
+              <div class="bc-row">
+                <div class="bc-lbl" style="color:var(--red)">FOMO 충동</div>
+                <div class="bc-track"><div class="bc-fill" style="width:78%;background:var(--red)"></div></div>
+                <div class="bc-val text-red">78</div>
+              </div>
+              <div class="bc-row">
+                <div class="bc-lbl" style="color:var(--orange)">군집행동</div>
+                <div class="bc-track"><div class="bc-fill" style="width:62%;background:var(--orange)"></div></div>
+                <div class="bc-val" style="color:var(--orange)">62</div>
+              </div>
+              <div class="bc-row">
+                <div class="bc-lbl" style="color:var(--blue)">손실회피</div>
+                <div class="bc-track"><div class="bc-fill" style="width:48%;background:var(--blue)"></div></div>
+                <div class="bc-val text-blue">48</div>
+              </div>
+              <div class="bc-row">
+                <div class="bc-lbl" style="color:var(--gold)">과잉확신</div>
+                <div class="bc-track"><div class="bc-fill" style="width:40%;background:var(--gold)"></div></div>
+                <div class="bc-val text-gold">40</div>
+              </div>
+            </div>
+
+            <!-- AI 주간 리포트 -->
+            <div class="ai-report">
+              <div class="ar-title">🤖 주간 AI 분석 리포트 (04.07~04.11)</div>
+              <div class="ar-item">
+                <span class="ar-tag" style="background:var(--red-hl);color:var(--red)">위험</span>화요일 KOSPI 급등 구간에서 충동 매수 패턴 1회 재발. 원칙 체크리스트 미확인.
+              </div>
+              <div class="ar-item">
+                <span class="ar-tag" style="background:var(--green-hl);color:var(--green)">성장</span>수요일은 FOMO 경보 발령 후 30분 딜레이 룰 최초 준수. 규율점수 91점.
+              </div>
+              <div class="ar-item">
+                <span class="ar-tag" style="background:var(--primary-hl);color:var(--primary)">제안</span>다음 주는 장중반(11시) 이전 매수 결정 완전 금지 원칙 추가를 권장합니다.
+              </div>
+            </div>
+
+            <!-- 월간 히트맵 -->
+            <div class="monthly-heatmap">
+              <div class="mh-title">4월 규율점수 히트맵</div>
+              <div class="heatmap-grid">
+                <div class="hm-cell empty"></div><div class="hm-cell empty"></div>
+                <div class="hm-cell lv1">73</div><div class="hm-cell bad">34</div>
+                <div class="hm-cell lv3">91</div><div class="hm-cell lv2">78</div>
+                <div class="hm-cell lv2">82</div>
+                <div class="hm-cell empty"></div><div class="hm-cell empty"></div>
+                <div class="hm-cell empty"></div><div class="hm-cell empty"></div>
+                <div class="hm-cell empty"></div><div class="hm-cell empty"></div>
+                <div class="hm-cell empty"></div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px;font-size:8px;color:var(--muted)">
+                <span>🟥 ~39</span><span>🟨 40~69</span><span style="color:var(--green)">🟩 70~84</span><span style="color:var(--green)">🟩 85+</span>
+              </div>
+            </div>
+
+          </div>
+          <div class="bot-nav">
+            <div class="bn"><div class="bn-i">🏠</div>홈</div>
+            <div class="bn"><div class="bn-i">📺</div>뉴스컨텐츠</div>
+            <div class="bn"><div class="bn-i">📝</div>일지</div>
+            <div class="bn on"><div class="bn-i">📊</div>분석</div>
+            <div class="bn"><div class="bn-i">⚙️</div>설정</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-lbl">⑤ 투자분석 — 일지별/주간/월간 3단계</div>
+    </div>
+
+    <!-- ┌──────────────────────────────────
+         PHONE 6 : FOMO 경보
+         원칙 + 과거일지 → 행동 가이드 중심
+         ──────────────────────────────────┘ -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="app-bar" style="background:var(--red-hl)">
+            <div>
+              <div class="ab-title" style="color:var(--red)">⚠️ FOMO 경보</div>
+              <div class="ab-sub">원칙 대입 행동 가이드 · 과거 패턴 분석</div>
+            </div>
+          </div>
+          <div class="body">
+
+            <!-- 경보 상황 요약 -->
+            <div class="fomo-alert-banner">
+              <div class="fab-badge">🚨 실시간 · 2026.04.10 14:12</div>
+              <div class="fab-title">KOSPI +1.8% 추격 위험 구간</div>
+              <div class="fab-desc">거래량 전일 대비 <strong>+62% 급증</strong>. 외국인 순매수 전환으로 개인 투자자 FOMO 매수 패턴이 집중되는 유형의 장세입니다.</div>
+              <div class="fab-stats">
+                <div class="fab-stat">
+                  <div class="fab-stat-val">+1.8%</div>
+                  <div class="fab-stat-lbl">KOSPI</div>
+                </div>
+                <div class="fab-stat">
+                  <div class="fab-stat-val">+62%</div>
+                  <div class="fab-stat-lbl">거래량 증가</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 핵심: 원칙 + 과거 대입 행동 가이드 -->
+            <div class="action-guide">
+              <div class="ag-header">
+                <div class="ag-icon">🧭</div>
+                <div>
+                  <div class="ag-title">현우님을 위한 행동 가이드</div>
+                  <div class="ag-sub">내 원칙 + 과거 유사 일지 기반 분석</div>
+                </div>
+              </div>
+              <div class="ag-steps">
+                <div class="ag-step">
+                  <div class="ag-step-num">1</div>
+                  <div class="ag-step-text"><strong>지금 매수 금지.</strong> 당신의 원칙 "장중반 추격 매수 금지"가 적용됩니다. 이 원칙을 세운 이유가 바로 이런 장세였습니다.</div>
+                </div>
+                <div class="ag-step">
+                  <div class="ag-step-num">2</div>
+                  <div class="ag-step-text"><strong>오후 2시 30분 재검토.</strong> 과거 유사 3회 중 오후 진입한 1회만 수익(+3.1%). 오전 2회는 평균 -3.5% 손실이었습니다.</div>
+                </div>
+                <div class="ag-step">
+                  <div class="ag-step-num">3</div>
+                  <div class="ag-step-text"><strong>관심 섹터 모니터링만 유지.</strong> 조선·반도체 상승세 확인 후, 장 마감 전 분할 매수 2차 기회 탐색이 유리합니다.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 과거 유사 상황 분석 -->
+            <div class="past-analysis">
+              <div class="pa-title">📂 과거 유사 FOMO 상황 3회 분석</div>
+              <div class="pa-item">
+                <div class="pa-row">
+                  <div class="pa-date">03.15</div>
+                  <div class="pa-cond">KOSPI +2.3% · 장중반 추격</div>
+                  <div class="pa-result bad">-4.2%</div>
+                </div>
+                <div class="pa-lesson">일지 기록: "흥분 상태에서 삼성전자 추격 매수. 원칙 미확인"</div>
+              </div>
+              <div class="pa-item">
+                <div class="pa-row">
+                  <div class="pa-date">02.28</div>
+                  <div class="pa-cond">외인 순매수 전환 당일 추격</div>
+                  <div class="pa-result bad">-2.8%</div>
+                </div>
+                <div class="pa-lesson">일지 기록: "군집행동 패턴 발동. 30분 딜레이 룰 미준수"</div>
+              </div>
+              <div class="pa-item">
+                <div class="pa-row">
+                  <div class="pa-date">01.20</div>
+                  <div class="pa-cond">유사 장세 오후 2시 진입</div>
+                  <div class="pa-result ok">+3.1%</div>
+                </div>
+                <div class="pa-lesson">일지 기록: "오전 경보 후 대기. 오후 분할 매수 원칙 준수"</div>
+              </div>
+            </div>
+
+            <!-- 한경TV 연계 콘텐츠 -->
+            <div class="tv-link">
+              <div class="tvl-icon">📺</div>
+              <div class="tvl-body">
+                <div class="tvl-title">한경TV 급등장 원칙 특집</div>
+                <div class="tvl-desc">지금 이런 장세에서 수익 낸 투자자들의 공통점 — AI 3분 요약</div>
+              </div>
+              <div class="tvl-arrow">›</div>
+            </div>
+
+          </div>
+          <div class="bot-nav">
+            <div class="bn"><div class="bn-i">🏠</div>홈</div>
+            <div class="bn"><div class="bn-i">📺</div>뉴스컨텐츠</div>
+            <div class="bn"><div class="bn-i">📝</div>일지</div>
+            <div class="bn"><div class="bn-i">📊</div>분석</div>
+            <div class="bn"><div class="bn-i">⚙️</div>설정</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-lbl">⑥ FOMO 경보 — 원칙+과거일지 행동가이드</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     B2B IR 포털
+══════════════════════════════════════ -->
+<div id="tab-ir" class="tab-panel">
+  <div class="b2b-wrap">
+    <div class="b2b-top">
+      <div>
+        <h1>📊 INVIT × 한경TV — IR 인텔리전스 포털</h1>
+        <p>기업 전담 AI 인텔리전스 · 한경TV 20년 아카이브 × INVIT 투자자 행동 데이터</p>
+        <div class="b2b-badges">
+          <div class="b2b-badge live">🟢 LIVE</div>
+          <div class="b2b-badge">Daily AI 리포트</div>
+          <div class="b2b-badge">보도자료 배포</div>
+          <div class="b2b-badge">방송 출연 쿼터</div>
+        </div>
+      </div>
+      <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px">🏢 삼성바이오로직스 ▾</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="sg-card">
+        <div class="sg-lbl">한경TV 언급 (주간)<div class="sg-badge bg-primary-hl text-primary">Daily</div></div>
+        <div class="sg-val text-primary">24회</div>
+        <div class="sg-meta">경쟁사 대비 +35%</div>
+        <div class="sg-delta up">▲ +4회 전주</div>
+      </div>
+      <div class="sg-card">
+        <div class="sg-lbl">투자자 관심도<div class="sg-badge" style="background:var(--gold-hl);color:var(--gold)">INVIT</div></div>
+        <div class="sg-val text-gold">8.7</div>
+        <div class="sg-meta">/ 10점 만점</div>
+        <div class="sg-delta up">▲ +1.2 전주</div>
+      </div>
+      <div class="sg-card">
+        <div class="sg-lbl">감성 분석<div class="sg-badge" style="background:var(--green-hl);color:var(--green)">AI</div></div>
+        <div class="sg-val text-green">긍정 78%</div>
+        <div class="sg-meta">부정 11% · 중립 11%</div>
+        <div class="sg-delta up">▲ +6%p</div>
+      </div>
+      <div class="sg-card">
+        <div class="sg-lbl">INVIT 투자자 VOC<div class="sg-badge" style="background:var(--orange-hl);color:var(--orange)">Unique</div></div>
+        <div class="sg-val" style="color:var(--orange)">+12%</div>
+        <div class="sg-meta">관심 등록 주간 증가율</div>
+        <div class="sg-delta up">▲ 상승세</div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-head">
+          <div><div class="ph-title">📋 데일리 기업 리포트</div><div class="ph-sub">오늘 07:00 자동 생성 · AI + 기자 검수</div></div>
+          <div class="ph-badge daily">Daily</div>
+        </div>
+        <div class="panel-body">
+          <div class="report-item">
+            <div class="ri-icon" style="background:var(--primary-hl)">🏢</div>
+            <div>
+              <div class="ri-title">당사 동향</div>
+              <div class="ri-desc">2분기 CMO 수주 목표 초과. 4공장 가동률 98%.</div>
+              <div class="ri-meta"><div class="ri-tag" style="background:var(--primary-hl);color:var(--primary)">당사</div><span>오늘 07:00</span></div>
+            </div>
+          </div>
+          <div class="report-item">
+            <div class="ri-icon" style="background:var(--gold-hl)">🏭</div>
+            <div>
+              <div class="ri-title">동종 섹터</div>
+              <div class="ri-desc">셀트리온 ADC FDA 패스트트랙. 경쟁 심화.</div>
+              <div class="ri-meta"><div class="ri-tag" style="background:var(--gold-hl);color:var(--gold)">섹터</div><span>오늘 07:00</span></div>
+            </div>
+          </div>
+          <div class="report-item">
+            <div class="ri-icon" style="background:var(--orange-hl)">💬</div>
+            <div>
+              <div class="ri-title">INVIT 투자자 VOC</div>
+              <div class="ri-desc">평균 감정 😊 흥분(3.8/5). 주 관심: CMO·배당.</div>
+              <div class="ri-meta"><div class="ri-tag" style="background:var(--orange-hl);color:var(--orange)">VOC</div><span>오늘 09:00</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="panel">
+          <div class="panel-head">
+            <div><div class="ph-title">📈 섹터 동향</div><div class="ph-sub">매주 월요일</div></div>
+            <div class="ph-badge weekly">Weekly</div>
+          </div>
+          <div class="panel-body">
+            <div class="metric-row"><span class="mr-lbl">바이오·헬스케어 지수</span><span class="mr-val text-green">+3.2%</span></div>
+            <div class="metric-row"><span class="mr-lbl">글로벌 CMO 시장</span><span class="mr-val">+18.5% YoY</span></div>
+            <div class="metric-row"><span class="mr-lbl">규제 이슈</span><span class="mr-val">FDA 승인 2건</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div><div class="ph-title">🔍 경쟁사 동향</div><div class="ph-sub">매주 수요일</div></div>
+            <div class="ph-badge weekly">Weekly</div>
+          </div>
+          <div class="panel-body">
+            <div class="metric-row"><span class="mr-lbl">셀트리온 언급</span><span class="mr-val">18회 (-6)</span></div>
+            <div class="metric-row"><span class="mr-lbl">롯데바이오 언급</span><span class="mr-val">7회 (-17)</span></div>
+            <div class="metric-row"><span class="mr-lbl">자사 키워드</span><span class="mr-val">수주·CMO·배당</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <div class="sh-tag">기업 구독 플랜</div>
+      <div class="sh-title">B2B IR 요금제</div>
+      <div class="sh-sub">기존 협찬 광고비와 동일 수준 — 받는 가치는 3배</div>
+    </div>
+    <div class="ir-plan-grid">
+      <div class="ir-plan">
+        <div class="ip-name">Basic</div>
+        <div class="ip-price">₩30만<span>/월</span></div>
+        <div class="ip-yr">연 360만원</div>
+        <div class="ip-feat"><span class="ip-ico on">✓</span>일일 섹터 AI 브리핑</div>
+        <div class="ip-feat"><span class="ip-ico on">✓</span>한경TV 방송 언급 트래킹</div>
+        <div class="ip-feat"><span class="ip-ico on">✓</span>보도자료 배포 2회/월</div>
+        <div class="ip-feat"><span class="ip-ico off">✗</span>온디맨드 AI 리포트</div>
+        <div class="ip-feat"><span class="ip-ico off">✗</span>방송 출연 쿼터</div>
+        <button class="ip-cta">도입 문의</button>
+      </div>
+      <div class="ir-plan rec">
+        <div class="ip-name">Standard</div>
+        <div class="ip-price">₩60만<span>/월</span></div>
+        <div class="ip-yr">연 720만원 · 기존 협찬비와 유사</div>
+        <div class="ip-feat"><span class="ip-ico on">✓</span>Basic 전체 포함</div>
+        <div class="ip-feat"><span class="ip-ico on">✓</span>경쟁사 동향 비교 (주 1회)</div>
+        <div class="ip-feat"><span class="ip-ico on">✓</span>AI 리포트 4회/년 + 기자 브리핑</div>
+        <div class="ip-feat"><span class="ip-ico on">✓</span>보도자료 배포 4회/월</div>
+        <div class="ip-feat"><span class="ip-ico off">✗</span>방송 출연 쿼터</div>
+        <button class="ip-cta">14일 무료 체험</button>
+      </div>
+      <div class="ir-plan">
+        <div class="ip-name">Premium</div>
+        <div class="ip-price">₩150만<span>/월</span></div>
+        <div class="ip-yr">연 1,800만원 · 전략적 파트너십</div>
+        <div class="ip-feat"><span class="ip-ico on">✓</span>Standard 전체 포함</div>
+        <div class="ip-feat"><span class="ip-ico on">✓</span>AI 리포트 무제한</div>
+        <div class="ip-feat"><span class="ip-ico on">✓</span>INVIT 투자자 행동 데이터</div>
+        <div class="ip-feat"><span class="ip-ico on">✓</span>방송 출연 연 2회 쿼터</div>
+        <div class="ip-feat"><span class="ip-ico on">✓</span>보도자료 배포 무제한</div>
+        <button class="ip-cta">도입 문의</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     세미나·교육
+══════════════════════════════════════ -->
+<div id="tab-seminar" class="tab-panel">
+  <div class="section-head">
+    <div class="sh-tag">Education & Events</div>
+    <div class="sh-title">한경TV × INVIT 투자 교육 세미나</div>
+    <div class="sh-sub">협찬사 슬롯 + INVIT 앱 디지털 플라이휠 연동 · 세미나→앱→구독 전환 퍼널</div>
+  </div>
+  <div class="sem-grid">
+    <div class="sem-card">
+      <div class="sem-banner" style="background:linear-gradient(135deg,var(--gold-hl),var(--gold-light))">
+        <div><div class="sem-name" style="color:var(--gold)">내 첫 포트폴리오</div><div class="sem-sub">대학생·사회초년생</div></div>
+        <div class="sem-tag" style="background:var(--gold);color:#fff">OPEN</div>
+      </div>
+      <div class="sem-body">
+        <div class="sem-info-row">📅 <span>2026.05.16 (토) 14:00</span></div>
+        <div class="sem-info-row">📍 <span>코엑스 Hall C · 500명</span></div>
+        <div class="sem-info-row">💰 <span>무료 (INVIT 앱 가입 필수)</span></div>
+        <div class="sem-sponsor">협찬: 키움증권 (메인) · 토스증권 (CPA)</div>
+        <div class="sem-ctas">
+          <button class="sem-cta pri">앱으로 신청</button>
+          <button class="sem-cta out">상세보기</button>
+        </div>
+      </div>
+    </div>
+    <div class="sem-card">
+      <div class="sem-banner" style="background:linear-gradient(135deg,var(--gold-hl),var(--orange-hl))">
+        <div><div class="sem-name" style="color:var(--gold)">월급쟁이 재테크 실전</div><div class="sem-sub">MZ 직장인 대상</div></div>
+        <div class="sem-tag" style="background:var(--red);color:#fff">HOT</div>
+      </div>
+      <div class="sem-body">
+        <div class="sem-info-row">📅 <span>2026.05.24 (일) 14:00</span></div>
+        <div class="sem-info-row">📍 <span>여의도 한경TV · 700명</span></div>
+        <div class="sem-info-row">💰 <span>무료 (PRO 30일 자동 부여)</span></div>
+        <div class="sem-sponsor">협찬: 삼성자산운용 (ETF) · NH투자증권</div>
+        <div class="sem-ctas">
+          <button class="sem-cta pri">앱으로 신청</button>
+          <button class="sem-cta out">상세보기</button>
+        </div>
+      </div>
+    </div>
+    <div class="sem-card">
+      <div class="sem-banner" style="background:linear-gradient(135deg,var(--primary-hl),var(--primary-light))">
+        <div><div class="sem-name" style="color:var(--primary)">한경TV 투자 마스터</div><div class="sem-sub">연간 플래그십 · 전 세그먼트</div></div>
+        <div class="sem-tag" style="background:var(--primary);color:#fff">플래그십</div>
+      </div>
+      <div class="sem-body">
+        <div class="sem-info-row">📅 <span>2026.09.12 (토) 10:00</span></div>
+        <div class="sem-info-row">📍 <span>코엑스 메인홀 · 3,000명</span></div>
+        <div class="sem-info-row">💰 <span>일반 무료 / VIP 3만원</span></div>
+        <div class="sem-sponsor">메인 협찬: 미래에셋증권</div>
+        <div class="sem-ctas">
+          <button class="sem-cta pri">VIP 사전 예약</button>
+          <button class="sem-cta out">상세보기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 플라이휠 다이어그램 -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:26px 28px">
+    <div style="font-size:15px;font-weight:900;margin-bottom:4px">온·오프라인 플라이휠</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:22px">세미나 → INVIT 앱 → 구독 전환 자동화 퍼널</div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center">
+      <div style="background:var(--surface-2);border-radius:12px;padding:14px 16px;text-align:center;min-width:96px"><div style="font-size:20px;margin-bottom:5px">🎓</div><div style="font-size:10px;font-weight:800">세미나 신청</div><div style="font-size:8px;color:var(--muted);margin-top:2px">앱 가입 조건화</div></div>
+      <div style="font-size:16px;color:var(--primary)">→</div>
+      <div style="background:var(--surface-2);border-radius:12px;padding:14px 16px;text-align:center;min-width:96px"><div style="font-size:20px;margin-bottom:5px">📱</div><div style="font-size:10px;font-weight:800">INVIT 가입</div><div style="font-size:8px;color:var(--muted);margin-top:2px">PRO 30일 무료</div></div>
+      <div style="font-size:16px;color:var(--primary)">→</div>
+      <div style="background:var(--surface-2);border-radius:12px;padding:14px 16px;text-align:center;min-width:96px"><div style="font-size:20px;margin-bottom:5px">📺</div><div style="font-size:10px;font-weight:800">VOD 제공</div><div style="font-size:8px;color:var(--muted);margin-top:2px">PRO 구독 혜택</div></div>
+      <div style="font-size:16px;color:var(--primary)">→</div>
+      <div style="background:var(--primary-hl);border:1.5px solid var(--primary);border-radius:12px;padding:14px 16px;text-align:center;min-width:96px"><div style="font-size:20px;margin-bottom:5px">💎</div><div style="font-size:10px;font-weight:800;color:var(--primary)">유료 전환</div><div style="font-size:8px;color:var(--muted);margin-top:2px">전환율 추적</div></div>
+      <div style="font-size:16px;color:var(--primary)">→</div>
+      <div style="background:var(--surface-2);border-radius:12px;padding:14px 16px;text-align:center;min-width:96px"><div style="font-size:20px;margin-bottom:5px">🔁</div><div style="font-size:10px;font-weight:800">재참여 유도</div><div style="font-size:8px;color:var(--muted);margin-top:2px">앱 내 프로모션</div></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+/* ── Theme ── */
+function toggleTheme(){
+  const h=document.documentElement;
+  h.setAttribute('data-theme',h.getAttribute('data-theme')==='dark'?'light':'dark');
+}
+
+/* ── Top Tabs ── */
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tt-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('tab-'+id).classList.add('on');
+  btn.classList.add('on');
+}
+
+/* ── News sub-tabs (stub) ── */
+function switchNewsTab(id,btn){
+  btn.closest('.news-fixed-tabs').querySelectorAll('.nft').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+/* ── Analysis tabs (stub) ── */
+function switchAt(id,btn){
+  btn.closest('.analysis-tabs').querySelectorAll('.at').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+/* ── Emotion select ── */
+function selectEmo(el){
+  el.closest('.emo-row').querySelectorAll('.emo-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+/* ── Principle toggle ── */
+function toggleP(el){
+  el.classList.toggle('on');
+  el.textContent=el.classList.contains('on')?'✓':'';
+}
+</script>
+</body>
+</html>

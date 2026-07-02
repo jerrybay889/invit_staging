@@ -6,6 +6,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '../constants/colors';
+import { Radius, Shadow } from '../constants/theme';
 
 interface Props {
   principles: { content: string; is_active: boolean }[];
@@ -38,16 +39,17 @@ export default function TodayPrincipleCard({ principles }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.white,
-    borderRadius: 16, padding: 20,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md, padding: 20,
     borderWidth: 1, borderColor: Colors.border,
+    ...Shadow.card,
   },
-  label: { fontSize: 13, color: Colors.textMuted, fontWeight: '500', marginBottom: 12 },
+  label: { fontSize: 11, color: Colors.textMuted, fontWeight: '700', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.8 },
   empty: { fontSize: 14, color: Colors.textMuted, fontStyle: 'italic' },
   list: { gap: 10 },
   item: { flexDirection: 'row', alignItems: 'flex-start' },
   bullet: {
-    width: 22, height: 22, borderRadius: 11,
+    width: 22, height: 22, borderRadius: Radius.full,
     backgroundColor: Colors.primary + '15',
     color: Colors.primary, fontSize: 12, fontWeight: '700',
     textAlign: 'center', lineHeight: 22, marginRight: 10,

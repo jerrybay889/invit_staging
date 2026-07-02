@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Colors } from '../constants/colors';
+import { Radius } from '../constants/theme';
 import type { FOMOAlert } from '../types/database';
 
 interface FomoAlertBannerProps {
@@ -59,13 +60,13 @@ export default function FomoAlertBanner({ alert, onDismiss }: FomoAlertBannerPro
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.warning + '15',
-    borderRadius: 12,
+    backgroundColor: Colors.warning + '12',
+    borderRadius: Radius.md,
     padding: 14,
     borderLeftWidth: 4,
     borderLeftColor: Colors.warning,
     borderWidth: 1,
-    borderColor: Colors.warning + '40',
+    borderColor: Colors.warning + '30',
   },
   labelRow: {
     flexDirection: 'row',
@@ -85,14 +86,14 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 13,
-    color: '#7A3400',
+    color: Colors.warningText,
     lineHeight: 20,
     marginBottom: 12,
   },
   dismissBtn: {
     alignSelf: 'flex-end',
     backgroundColor: Colors.warning,
-    borderRadius: 8,
+    borderRadius: Radius.sm,
     paddingHorizontal: 16,
     paddingVertical: 7,
     minWidth: 80,
@@ -101,6 +102,6 @@ const styles = StyleSheet.create({
   dismissBtnText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: Colors.white,
   },
 });
