@@ -13,24 +13,20 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { CORS_HEADERS } from '../_shared/auth.ts';
 
 const FUNCTION_NAME = 'delete-account';
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      },
-    });
+    return new Response('ok', { headers: CORS_HEADERS });
   }
 
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
-        status: 401, headers: { 'Content-Type': 'application/json' },
+        status: 401, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       });
     }
 
@@ -45,7 +41,7 @@ Deno.serve(async (req: Request) => {
     const { data: { user }, error: authError } = await supabaseAnon.auth.getUser();
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
-        status: 401, headers: { 'Content-Type': 'application/json' },
+        status: 401, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       });
     }
 
@@ -55,7 +51,7 @@ Deno.serve(async (req: Request) => {
 
     if (body.confirm !== 'DELETE') {
       return new Response(JSON.stringify({ error: 'confirm 필드에 "DELETE"를 입력해주세요' }), {
-        status: 400, headers: { 'Content-Type': 'application/json' },
+        status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       });
     }
 
@@ -105,14 +101,14 @@ Deno.serve(async (req: Request) => {
     }
 
     return new Response(JSON.stringify({ success: true }), {
-      status: 200, headers: { 'Content-Type': 'application/json' },
+      status: 200, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('delete-account error:', message);
     return new Response(JSON.stringify({ error: message }), {
-      status: 500, headers: { 'Content-Type': 'application/json' },
+      status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
   }
 });

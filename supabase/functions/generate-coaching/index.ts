@@ -23,6 +23,7 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { CORS_HEADERS } from '../_shared/auth.ts';
 
 // ─── Constants ───
 
@@ -281,12 +282,7 @@ function computeCost(inputTokens: number, outputTokens: number): number {
 
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      },
-    });
+    return new Response('ok', { headers: CORS_HEADERS });
   }
 
   try {
@@ -294,7 +290,7 @@ serve(async (req: Request) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       });
     }
 
@@ -309,7 +305,7 @@ serve(async (req: Request) => {
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       });
     }
 
@@ -318,7 +314,7 @@ serve(async (req: Request) => {
     if (rateLimited) {
       return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
         status: 429,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       });
     }
 
@@ -353,7 +349,7 @@ serve(async (req: Request) => {
         coaching: { message: FALLBACK_MESSAGE, source: 'fallback' },
       }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       });
     }
 
@@ -496,13 +492,13 @@ serve(async (req: Request) => {
       },
     }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
   }
 });

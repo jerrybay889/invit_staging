@@ -10,6 +10,7 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { CORS_HEADERS } from '../_shared/auth.ts';
 
 // PII-001 — 필드명 블랙리스트 + 값 스크럽(이메일/전화/장수 숫자) + 크기 상한.
 const PII_PROP_KEYS = new Set(['email', 'phone', 'name', 'display_name', 'account', 'ticker_with_pnl']);
@@ -46,19 +47,14 @@ function sanitizeProps(props: Record<string, unknown>): Record<string, unknown> 
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      },
-    });
+    return new Response('ok', { headers: CORS_HEADERS });
   }
 
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
-        status: 401, headers: { 'Content-Type': 'application/json' },
+        status: 401, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       });
     }
 
@@ -73,20 +69,20 @@ Deno.serve(async (req: Request) => {
     const { data: { user }, error: authError } = await supabaseAnon.auth.getUser();
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
-        status: 401, headers: { 'Content-Type': 'application/json' },
+        status: 401, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       });
     }
 
     let body: { events?: unknown[] } = {};
     try { body = await req.json(); } catch {
       return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
-        status: 400, headers: { 'Content-Type': 'application/json' },
+        status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       });
     }
 
     if (!Array.isArray(body.events) || body.events.length === 0) {
       return new Response(JSON.stringify({ inserted: 0 }), {
-        status: 200, headers: { 'Content-Type': 'application/json' },
+        status: 200, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       });
     }
 
@@ -105,7 +101,7 @@ Deno.serve(async (req: Request) => {
 
     if (rows.length === 0) {
       return new Response(JSON.stringify({ inserted: 0 }), {
-        status: 200, headers: { 'Content-Type': 'application/json' },
+        status: 200, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       });
     }
 
@@ -119,14 +115,14 @@ Deno.serve(async (req: Request) => {
     }
 
     return new Response(JSON.stringify({ success: true, inserted: rows.length }), {
-      status: 200, headers: { 'Content-Type': 'application/json' },
+      status: 200, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('log-events error:', message);
     return new Response(JSON.stringify({ error: message }), {
-      status: 500, headers: { 'Content-Type': 'application/json' },
+      status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
   }
 });
