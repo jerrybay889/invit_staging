@@ -245,7 +245,7 @@ export default function ST01_Settings() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.surfaceBg },
-  scroll: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 110 },
+  scroll: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 140 },
   title: { fontSize: 24, fontWeight: '700', color: Colors.textPrimary, marginBottom: 20 },
   card: {
     backgroundColor: Colors.surface, borderRadius: Radius.lg,

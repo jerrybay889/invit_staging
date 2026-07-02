@@ -125,7 +125,8 @@ function MainTabNavigator() {
   const insets = useSafeAreaInsets();
   // 웹 미리보기: safe area bottom padding 추가 (탭바 하단 여백 확보)
   const bottomInset = Platform.OS === 'web' ? 16 : insets.bottom;
-  const tabBarHeight = 56 + bottomInset;
+  // 탭바 높이: 아이콘(20) + 라벨(20) + padding = 최소 80px
+  const tabBarHeight = 80 + bottomInset;
 
   return (
     <Tab.Navigator
