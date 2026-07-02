@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 8,
   },
   writeBtnText: { fontSize: 14, fontWeight: '600', color: Colors.white },
-  list: { paddingHorizontal: 20, paddingBottom: 140 },
+  list: { paddingHorizontal: 20, paddingBottom: 100 },
   card: {
     backgroundColor: Colors.surface, borderRadius: Radius.md,
     borderWidth: 1, borderColor: Colors.border,

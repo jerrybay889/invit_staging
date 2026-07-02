@@ -95,7 +95,7 @@ function TabIcon({ label, focused }: { label: string; focused: boolean }) {
     홈: '🏠', 일지: '📓', 원칙: '📋', 분석: '📊', 설정: '⚙️',
   };
   return (
-    <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.45 }}>
+    <Text style={{ fontSize: 25, opacity: focused ? 1 : 0.5, lineHeight: 28 }}>
       {icons[label] ?? '●'}
     </Text>
   );
@@ -123,10 +123,10 @@ function OnboardingNavigator() {
 
 function MainTabNavigator() {
   const insets = useSafeAreaInsets();
-  // 웹 미리보기: safe area bottom padding 추가 (탭바 하단 여백 확보)
-  const bottomInset = Platform.OS === 'web' ? 16 : insets.bottom;
-  // 탭바 높이: 아이콘(20) + 라벨(20) + padding = 최소 80px
-  const tabBarHeight = 80 + bottomInset;
+  // 웹은 안전영역이 없으므로 0, 네이티브는 기기 인셋(홈 인디케이터 등) 반영
+  const bottomInset = Platform.OS === 'web' ? 0 : insets.bottom;
+  // 탭바 콘텐츠(아이콘+라벨) 높이 60px + 하단 안전영역만 추가 — 불필요한 여백 제거
+  const tabBarHeight = 60 + bottomInset;
 
   return (
     <Tab.Navigator
@@ -141,12 +141,19 @@ function MainTabNavigator() {
           backgroundColor: Colors.white,
           borderTopColor: Colors.border,
           height: tabBarHeight,
-          paddingBottom: bottomInset + 6,
+          paddingBottom: bottomInset + 4,
           paddingTop: 6,
         },
+        tabBarItemStyle: {
+          paddingVertical: 0,
+        },
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
+          fontSize: 12.5,
+          fontWeight: '600',
+          marginTop: 2,
+        },
+        tabBarIconStyle: {
+          marginTop: 0,
         },
       })}
     >

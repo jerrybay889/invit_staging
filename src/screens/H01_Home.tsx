@@ -336,7 +336,7 @@ export default function H01_Home() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.surfaceBg },
-  scroll: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 140, gap: Spacing.md },
+  scroll: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 100, gap: Spacing.md },
 
   header: {
     flexDirection: 'row',
