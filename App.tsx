@@ -19,7 +19,7 @@
  */
 
 import React, { useEffect, useRef, Component, type ReactNode } from 'react';
-import { ActivityIndicator, View, Text, StyleSheet, LogBox, ScrollView } from 'react-native';
+import { ActivityIndicator, View, Text, StyleSheet, LogBox, ScrollView, Platform } from 'react-native';
 
 // Crash 원인 파악용 ErrorBoundary — 다음 빌드에서 제거 예정
 class CrashDisplay extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -76,38 +76,18 @@ import J02_JournalHistory from './src/screens/J02_JournalHistory';
 import J02_JournalView from './src/screens/J02_JournalView';
 import P01_PrincipleManage from './src/screens/P01_PrincipleManage';
 import ST01_Settings from './src/screens/ST01_Settings';
+import IN01_Insights from './src/screens/IN01_Insights';
 import SubscriptionScreen from './src/screens/SubscriptionScreen';
 
 import type { MainStackParamList, MainTabParamList } from './src/navigation/types';
-
-// FOMO 알림을 포그라운드에서도 배너로 표시 (setNotificationHandler는 모듈 최상단에서 1회 설정)
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  } as any),
-});
+// lib/notifications.ts 모듈 임포트가 setNotificationHandler를 1회 설정 (중복 등록 방지)
+import './src/lib/notifications';
+import PhonePreviewFrame from './src/components/PhonePreviewFrame';
 
 const AuthStack = createNativeStackNavigator();
 const OnboardingStack = createNativeStackNavigator();
 const MainStack = createNativeStackNavigator<MainStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
-
-// 분석 탭 준비 중 플레이스홀더
-function InsightsPlaceholder() {
-  return (
-    <SafeAreaProvider>
-      <View style={styles.placeholder}>
-        <Text style={styles.placeholderEmoji}>📊</Text>
-        <Text style={styles.placeholderTitle}>분석 준비 중</Text>
-        <Text style={styles.placeholderDesc}>
-          편향 프로파일과 규율 트렌드 차트가{'\n'}다음 업데이트에서 제공됩니다
-        </Text>
-      </View>
-    </SafeAreaProvider>
-  );
-}
 
 // 탭 아이콘 (텍스트 기반 — expo vector icons 없이)
 function TabIcon({ label, focused }: { label: string; focused: boolean }) {
@@ -143,7 +123,9 @@ function OnboardingNavigator() {
 
 function MainTabNavigator() {
   const insets = useSafeAreaInsets();
-  const tabBarHeight = 56 + insets.bottom;
+  // 웹 미리보기: safe area bottom padding 추가 (탭바 하단 여백 확보)
+  const bottomInset = Platform.OS === 'web' ? 16 : insets.bottom;
+  const tabBarHeight = 56 + bottomInset;
 
   return (
     <Tab.Navigator
@@ -158,7 +140,7 @@ function MainTabNavigator() {
           backgroundColor: Colors.white,
           borderTopColor: Colors.border,
           height: tabBarHeight,
-          paddingBottom: insets.bottom + 6,
+          paddingBottom: bottomInset + 6,
           paddingTop: 6,
         },
         tabBarLabelStyle: {
@@ -170,7 +152,7 @@ function MainTabNavigator() {
       <Tab.Screen name="홈" component={H01_Home} />
       <Tab.Screen name="일지" component={J02_JournalHistory} />
       <Tab.Screen name="원칙" component={P01_PrincipleManage} />
-      <Tab.Screen name="분석" component={InsightsPlaceholder} />
+      <Tab.Screen name="분석" component={IN01_Insights} />
       <Tab.Screen name="설정" component={ST01_Settings} />
     </Tab.Navigator>
   );
@@ -279,11 +261,13 @@ export default function App() {
 
   return (
     <CrashDisplay>
-      <SafeAreaProvider>
-        <AuthProvider>
-          <RootNavigator />
-        </AuthProvider>
-      </SafeAreaProvider>
+      <PhonePreviewFrame>
+        <SafeAreaProvider>
+          <AuthProvider>
+            <RootNavigator />
+          </AuthProvider>
+        </SafeAreaProvider>
+      </PhonePreviewFrame>
     </CrashDisplay>
   );
 }
@@ -294,13 +278,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.surfaceBg,
-  },
-  placeholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceBg,
-    paddingHorizontal: 32,
   },
   envError: {
     flex: 1,
@@ -315,11 +292,5 @@ const styles = StyleSheet.create({
   envErrorBody: {
     fontSize: 14, color: Colors.textPrimary, textAlign: 'center', lineHeight: 22,
   },
-  placeholderEmoji: { fontSize: 52, marginBottom: 16 },
-  placeholderTitle: {
-    fontSize: 20, fontWeight: '700', color: Colors.textPrimary, marginBottom: 10,
-  },
-  placeholderDesc: {
-    fontSize: 14, color: Colors.textMuted, textAlign: 'center', lineHeight: 22,
-  },
 });
+
