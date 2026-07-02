@@ -291,11 +291,10 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  root: Platform.OS === 'web' ? {
-    flex: 1,
-    height: '100vh' as any,
-    overflow: 'hidden' as any,
-  } : {
+  // Expo 웹 템플릿(dist/index.html)이 html/body/#root에 height:100%·overflow:hidden을
+  // 이미 적용하므로 여기서 height:100vh를 강제하지 않는다.
+  // (모바일 브라우저는 주소창/툴바 때문에 100vh ≠ 실제 보이는 높이라 하단 콘텐츠가 잘림)
+  root: {
     flex: 1,
   },
   loading: {
