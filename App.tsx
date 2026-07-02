@@ -19,7 +19,8 @@
  */
 
 import React, { useEffect, useRef, Component, type ReactNode } from 'react';
-import { ActivityIndicator, View, Text, StyleSheet, LogBox, ScrollView, Platform } from 'react-native';
+import { ActivityIndicator, View, Text, StyleSheet, LogBox, ScrollView, Platform, TouchableOpacity } from 'react-native';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 // Crash 원인 파악용 ErrorBoundary — 다음 빌드에서 제거 예정
 class CrashDisplay extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -89,17 +90,90 @@ const OnboardingStack = createNativeStackNavigator();
 const MainStack = createNativeStackNavigator<MainStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-// 탭 아이콘 (텍스트 기반 — expo vector icons 없이)
-function TabIcon({ label, focused }: { label: string; focused: boolean }) {
-  const icons: Record<string, string> = {
-    홈: '🏠', 일지: '📓', 원칙: '📋', 분석: '📊', 설정: '⚙️',
-  };
+const TAB_ICONS: Record<string, string> = {
+  홈: '🏠', 일지: '📓', 원칙: '📋', 분석: '📊', 설정: '⚙️',
+};
+
+// ★ 커스텀 탭바 — @react-navigation/bottom-tabs 기본 탭바는 라벨 슬롯 높이가
+// 내부적으로 고정돼 있어(작은 기본 폰트 기준) 폰트를 키우면 상단이 잘리는 문제가
+// 있었다. 아이콘+라벨을 직접 그려서 그 제약을 완전히 우회한다.
+function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const insets = useSafeAreaInsets();
+  const bottomInset = Platform.OS === 'web' ? 12 : insets.bottom;
+
   return (
-    <Text style={{ fontSize: 25, opacity: focused ? 1 : 0.5, lineHeight: 28 }}>
-      {icons[label] ?? '●'}
-    </Text>
+    <View
+      style={[
+        tabBarStyles.container,
+        { paddingBottom: bottomInset + 8 },
+      ]}
+    >
+      {state.routes.map((route, index) => {
+        const { options } = descriptors[route.key];
+        const focused = state.index === index;
+        const label = route.name;
+
+        const onPress = () => {
+          const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+          if (!focused && !event.defaultPrevented) {
+            navigation.navigate(route.name);
+          }
+        };
+
+        return (
+          <TouchableOpacity
+            key={route.key}
+            accessibilityRole="button"
+            accessibilityState={focused ? { selected: true } : {}}
+            accessibilityLabel={options.tabBarAccessibilityLabel}
+            onPress={onPress}
+            activeOpacity={0.7}
+            style={tabBarStyles.item}
+          >
+            <Text style={[tabBarStyles.icon, { opacity: focused ? 1 : 0.5 }]}>
+              {TAB_ICONS[label] ?? '●'}
+            </Text>
+            <Text
+              style={[
+                tabBarStyles.label,
+                { color: focused ? Colors.primary : Colors.textMuted },
+              ]}
+              numberOfLines={1}
+            >
+              {label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
   );
 }
+
+const tabBarStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    backgroundColor: Colors.white,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+    paddingTop: 10,
+  },
+  item: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 2,
+  },
+  icon: {
+    fontSize: 24,
+    lineHeight: 28,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 16,
+  },
+});
 
 function AuthNavigator() {
   return (
@@ -122,40 +196,10 @@ function OnboardingNavigator() {
 }
 
 function MainTabNavigator() {
-  const insets = useSafeAreaInsets();
-  // 웹은 안전영역이 없으므로 0, 네이티브는 기기 인셋(홈 인디케이터 등) 반영
-  const bottomInset = Platform.OS === 'web' ? 0 : insets.bottom;
-  // 탭바 콘텐츠(아이콘+라벨) 높이 60px + 하단 안전영역만 추가 — 불필요한 여백 제거
-  const tabBarHeight = 60 + bottomInset;
-
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarIcon: ({ focused }) => (
-          <TabIcon label={route.name} focused={focused} />
-        ),
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textMuted,
-        tabBarStyle: {
-          backgroundColor: Colors.white,
-          borderTopColor: Colors.border,
-          height: tabBarHeight,
-          paddingBottom: bottomInset + 4,
-          paddingTop: 6,
-        },
-        tabBarItemStyle: {
-          paddingVertical: 0,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12.5,
-          fontWeight: '600',
-          marginTop: 2,
-        },
-        tabBarIconStyle: {
-          marginTop: 0,
-        },
-      })}
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="홈" component={H01_Home} />
       <Tab.Screen name="일지" component={J02_JournalHistory} />

@@ -436,7 +436,7 @@ export default function P01_PrincipleManage() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.surfaceBg },
-  scrollContent: { paddingBottom: 100 },
+  scrollContent: { paddingBottom: 110 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.surfaceBg },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
