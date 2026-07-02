@@ -17,7 +17,6 @@ import {
   SafeAreaView,
   ScrollView,
   ActivityIndicator,
-  Alert,
   Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -25,6 +24,7 @@ import { Colors } from '../constants/colors';
 import { Radius } from '../constants/theme';
 import { useSubscription } from '../hooks/useSubscription';
 import { Analytics } from '../lib/analytics';
+import { showAlert } from '../lib/platformAlert';
 
 const FEATURES = [
   { icon: '📊', text: '투자 편향 진단 + 아키타입 코칭' },
@@ -55,17 +55,17 @@ export default function SubscriptionScreen() {
   const handlePurchase = async () => {
     const success = await purchasePremium();
     if (success) {
-      Alert.alert('구독 완료', '프리미엄 구독이 시작되었습니다!', [
+      showAlert('구독 완료', '프리미엄 구독이 시작되었습니다!', [
         { text: '확인', onPress: () => navigation.goBack() },
       ]);
     } else {
-      Alert.alert('구독 실패', '결제에 실패했습니다. 다시 시도해주세요.');
+      showAlert('구독 실패', '결제에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
   const handleRestore = async () => {
     const success = await restorePurchases();
-    Alert.alert(
+    showAlert(
       success ? '복원 완료' : '복원 실패',
       success
         ? '기존 구독이 복원되었습니다.'
@@ -77,7 +77,7 @@ export default function SubscriptionScreen() {
     // iOS: App Store 구독 관리 / Android: Google Play 구독 관리
     const url = 'https://apps.apple.com/account/subscriptions';
     Linking.openURL(url).catch(() => {
-      Alert.alert('안내', '앱 스토어에서 구독을 관리하세요.');
+      showAlert('안내', '앱 스토어에서 구독을 관리하세요.');
     });
   };
 

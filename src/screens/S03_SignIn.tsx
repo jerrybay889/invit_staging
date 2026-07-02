@@ -6,10 +6,11 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  SafeAreaView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
+  SafeAreaView, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../contexts/AuthContext';
+import { showAlert } from '../lib/platformAlert';
 import { Colors } from '../constants/colors';
 import { Radius, Shadow } from '../constants/theme';
 
@@ -25,7 +26,7 @@ export default function S03_SignIn({ navigation }: Props) {
 
   const handleSignIn = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('입력 오류', '이메일과 비밀번호를 입력해주세요.');
+      showAlert('입력 오류', '이메일과 비밀번호를 입력해주세요.');
       return;
     }
 
@@ -34,7 +35,7 @@ export default function S03_SignIn({ navigation }: Props) {
     setLoading(false);
 
     if (error) {
-      Alert.alert('로그인 실패', error.message);
+      showAlert('로그인 실패', error.message);
     }
     // 성공 시 AuthContext의 onAuthStateChange가 자동으로 user 세팅 → 네비게이션 전환
   };

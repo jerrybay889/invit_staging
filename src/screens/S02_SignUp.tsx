@@ -9,11 +9,12 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  SafeAreaView, ScrollView, Alert, ActivityIndicator,
+  SafeAreaView, ScrollView, ActivityIndicator,
   KeyboardAvoidingView, Platform, Linking,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../lib/supabase';
+import { showAlert } from '../lib/platformAlert';
 import { Colors } from '../constants/colors';
 import { Radius, Shadow } from '../constants/theme';
 
@@ -39,19 +40,19 @@ export default function S02_SignUp({ navigation }: Props) {
 
   const handleSignUp = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('입력 오류', '이메일과 비밀번호를 입력해주세요.');
+      showAlert('입력 오류', '이메일과 비밀번호를 입력해주세요.');
       return;
     }
     if (password.length < 6) {
-      Alert.alert('입력 오류', '비밀번호는 6자 이상이어야 합니다.');
+      showAlert('입력 오류', '비밀번호는 6자 이상이어야 합니다.');
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('입력 오류', '비밀번호가 일치하지 않습니다.');
+      showAlert('입력 오류', '비밀번호가 일치하지 않습니다.');
       return;
     }
     if (!tosAgreed || !privacyAgreed) {
-      Alert.alert('동의 필요', '이용약관과 개인정보처리방침에 동의해주세요.');
+      showAlert('동의 필요', '이용약관과 개인정보처리방침에 동의해주세요.');
       return;
     }
 
@@ -66,7 +67,7 @@ export default function S02_SignUp({ navigation }: Props) {
 
     if (error) {
       setLoading(false);
-      Alert.alert('회원가입 실패', error.message);
+      showAlert('회원가입 실패', error.message);
       return;
     }
 
@@ -88,7 +89,7 @@ export default function S02_SignUp({ navigation }: Props) {
     }
 
     setLoading(false);
-    Alert.alert('확인', '인증 이메일을 발송했습니다. 이메일을 확인해주세요.', [
+    showAlert('확인', '인증 이메일을 발송했습니다. 이메일을 확인해주세요.', [
       { text: '확인', onPress: () => navigation.navigate('SignIn') },
     ]);
   };

@@ -7,7 +7,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, ScrollView,
-  TouchableOpacity, Alert, Linking, ActivityIndicator,
+  TouchableOpacity, Linking, ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,6 +17,7 @@ import { Colors } from '../constants/colors';
 import { Radius, Shadow } from '../constants/theme';
 import { ARCHETYPE_DEFINITIONS } from '../constants/archetype';
 import { useSubscription } from '../hooks/useSubscription';
+import { showAlert } from '../lib/platformAlert';
 import type { User } from '../types/database';
 import type { MainStackParamList } from '../navigation/types';
 
@@ -53,7 +54,7 @@ export default function ST01_Settings() {
     : null;
 
   const handleSignOut = () => {
-    Alert.alert('로그아웃', '로그아웃 하시겠습니까?', [
+    showAlert('로그아웃', '로그아웃 하시겠습니까?', [
       { text: '취소', style: 'cancel' },
       { text: '로그아웃', style: 'destructive', onPress: signOut },
     ]);
@@ -61,7 +62,7 @@ export default function ST01_Settings() {
 
   // G1 — 회원 탈퇴 (2단계 확인, delete-account EF 호출)
   const handleDeleteAccount = () => {
-    Alert.alert(
+    showAlert(
       '회원 탈퇴',
       '탈퇴 시 모든 투자 일지·원칙·코칭 이력이 삭제됩니다. 복구할 수 없습니다.',
       [
@@ -70,7 +71,7 @@ export default function ST01_Settings() {
           text: '탈퇴 진행',
           style: 'destructive',
           onPress: () => {
-            Alert.alert(
+            showAlert(
               '정말 탈퇴하시겠습니까?',
               '이 작업은 되돌릴 수 없습니다.',
               [
@@ -98,7 +99,7 @@ export default function ST01_Settings() {
       // 탈퇴 성공 — Auth 세션이 무효화되어 AuthContext가 자동으로 로그아웃 상태로 전환
     } catch (e) {
       setDeleting(false);
-      Alert.alert('탈퇴 실패', '잠시 후 다시 시도해주세요.');
+      showAlert('탈퇴 실패', '잠시 후 다시 시도해주세요.');
       console.error('[ST01] delete-account failed:', e);
     }
   };

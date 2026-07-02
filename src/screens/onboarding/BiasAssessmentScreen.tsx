@@ -6,7 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  View, TouchableOpacity, Text, StyleSheet, Alert, ActivityIndicator, ScrollView,
+  View, TouchableOpacity, Text, StyleSheet, ActivityIndicator, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,6 +17,7 @@ import { BiasAnswers } from '../../types/database';
 import { Colors } from '../../constants/colors';
 import { Radius } from '../../constants/theme';
 import { Analytics } from '../../lib/analytics';
+import { showAlert } from '../../lib/platformAlert';
 
 type Props = {
   navigation: NativeStackNavigationProp<any>;
@@ -70,7 +71,7 @@ export default function BiasAssessmentScreen({ navigation }: Props) {
     setSubmitting(false);
 
     if (error) {
-      Alert.alert('진단 오류', '진단 결과 저장에 실패했습니다. 다시 시도해주세요.');
+      showAlert('진단 오류', '진단 결과 저장에 실패했습니다. 다시 시도해주세요.');
       return;
     }
 

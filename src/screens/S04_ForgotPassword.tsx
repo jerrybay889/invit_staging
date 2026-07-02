@@ -6,10 +6,11 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  SafeAreaView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
+  SafeAreaView, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../contexts/AuthContext';
+import { showAlert } from '../lib/platformAlert';
 import { Colors } from '../constants/colors';
 import { Radius } from '../constants/theme';
 
@@ -25,7 +26,7 @@ export default function S04_ForgotPassword({ navigation }: Props) {
 
   const handleReset = async () => {
     if (!email.trim()) {
-      Alert.alert('입력 오류', '이메일을 입력해주세요.');
+      showAlert('입력 오류', '이메일을 입력해주세요.');
       return;
     }
 
@@ -34,7 +35,7 @@ export default function S04_ForgotPassword({ navigation }: Props) {
     setLoading(false);
 
     if (error) {
-      Alert.alert('오류', error.message);
+      showAlert('오류', error.message);
     } else {
       setSent(true);
     }

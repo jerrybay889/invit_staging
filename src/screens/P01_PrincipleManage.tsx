@@ -13,7 +13,6 @@ import {
   TouchableOpacity,
   Switch,
   ActivityIndicator,
-  Alert,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
@@ -25,6 +24,7 @@ import { supabase } from '../lib/supabase';
 import { Colors } from '../constants/colors';
 import { Radius, Shadow } from '../constants/theme';
 import { ARCHETYPE_DEFINITIONS } from '../constants/archetype';
+import { showAlert } from '../lib/platformAlert';
 import type { Principle, PrincipleMaster } from '../types/database';
 
 type MasterFilter = 'all' | 'global' | 'kr' | 'invit';
@@ -107,7 +107,7 @@ export default function P01_PrincipleManage() {
       .select()
       .single();
     if (error) {
-      Alert.alert('오류', '원칙을 추가하지 못했습니다.');
+      showAlert('오류', '원칙을 추가하지 못했습니다.');
       return false;
     }
     setPrinciples(prev => [...prev, data as Principle]);
@@ -142,12 +142,12 @@ export default function P01_PrincipleManage() {
       setPrinciples(prev =>
         prev.map(p => p.id === principle.id ? { ...p, is_active: principle.is_active } : p)
       );
-      Alert.alert('오류', '변경하지 못했습니다.');
+      showAlert('오류', '변경하지 못했습니다.');
     }
   };
 
   const deletePrinciple = (principle: Principle) => {
-    Alert.alert('원칙 삭제', `"${principle.content}"를 삭제할까요?`, [
+    showAlert('원칙 삭제', `"${principle.content}"를 삭제할까요?`, [
       { text: '취소', style: 'cancel' },
       {
         text: '삭제', style: 'destructive', onPress: async () => {
@@ -160,7 +160,7 @@ export default function P01_PrincipleManage() {
             .eq('user_id', user.id);
           if (error) {
             await fetchAll();
-            Alert.alert('오류', '삭제하지 못했습니다.');
+            showAlert('오류', '삭제하지 못했습니다.');
           }
         },
       },

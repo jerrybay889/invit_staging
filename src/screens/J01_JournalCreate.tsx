@@ -20,7 +20,6 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Alert,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
@@ -28,6 +27,7 @@ import {
   Modal,
 } from 'react-native';
 import { Analytics } from '../lib/analytics';
+import { showAlert } from '../lib/platformAlert';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../hooks/useAuth';
@@ -221,7 +221,7 @@ export default function J01_JournalCreate() {
       // G4: 코칭 모달 표시 이벤트
       Analytics.track('coaching_viewed', { source: (coachingData as any)?.coaching?.source ?? 'template' });
     } catch (error) {
-      Alert.alert('저장 실패', '일지를 저장하지 못했습니다. 다시 시도해주세요.');
+      showAlert('저장 실패', '일지를 저장하지 못했습니다. 다시 시도해주세요.');
       console.error('Journal save failed:', error);
     } finally {
       setSaving(false);
