@@ -261,13 +261,23 @@ export default function App() {
 
   return (
     <CrashDisplay>
-      <PhonePreviewFrame>
+      {Platform.OS === 'web' ? (
+        // 웹: 폰 프레임 없이 전체 화면 사용
         <SafeAreaProvider>
           <AuthProvider>
             <RootNavigator />
           </AuthProvider>
         </SafeAreaProvider>
-      </PhonePreviewFrame>
+      ) : (
+        // 네이티브: 폰 프레임 유지
+        <PhonePreviewFrame>
+          <SafeAreaProvider>
+            <AuthProvider>
+              <RootNavigator />
+            </AuthProvider>
+          </SafeAreaProvider>
+        </PhonePreviewFrame>
+      )}
     </CrashDisplay>
   );
 }
