@@ -28,7 +28,7 @@ class CrashDisplay extends Component<{ children: ReactNode }, { error: Error | n
   render() {
     if (this.state.error) {
       return (
-        <View style={{ flex: 1, backgroundColor: '#fff', padding: 24, paddingTop: 60 }}>
+        <View style={[styles.root, { backgroundColor: '#fff', padding: 24, paddingTop: 60 }]}>
           <Text style={{ fontSize: 18, fontWeight: '700', color: '#c00', marginBottom: 12 }}>
             앱 충돌 — 에러 내용 (스크린샷 찍어 전달)
           </Text>
@@ -41,7 +41,7 @@ class CrashDisplay extends Component<{ children: ReactNode }, { error: Error | n
         </View>
       );
     }
-    return this.props.children;
+    return <View style={styles.root}>{this.props.children}</View>;
   }
 }
 
@@ -283,6 +283,13 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  root: Platform.OS === 'web' ? {
+    flex: 1,
+    height: '100vh' as any,
+    overflow: 'hidden' as any,
+  } : {
+    flex: 1,
+  },
   loading: {
     flex: 1,
     justifyContent: 'center',
