@@ -5,6 +5,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -32,7 +33,19 @@ export const supabase = createClient(
       storage: AsyncStorage,
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: false,
+      // 웹: 이메일 인증/비번재설정 링크 클릭 후 돌아온 URL의 토큰을 자동 감지해 세션 완성.
+      // 네이티브: invit:// 딥링크는 URL 기반이 아니라 별도 처리이므로 불필요(기존 false 유지).
+      detectSessionInUrl: Platform.OS === 'web',
     },
   },
 );
+
+/**
+ * 이메일 인증/비번재설정 리다이렉트 URL.
+ * 네이티브: 앱 딥링크. 웹: 현재 배포된 도메인(Netlify 등) 그대로 — 앱이 없는 웹 테스터도
+ * 클릭 시 실제로 열리는 페이지로 돌아와야 detectSessionInUrl이 세션을 완성할 수 있다.
+ */
+export const authRedirectTo =
+  Platform.OS === 'web'
+    ? (typeof window !== 'undefined' ? window.location.origin : 'https://invit.kr')
+    : 'invit://auth/callback';

@@ -13,7 +13,7 @@ import {
   KeyboardAvoidingView, Platform, Linking,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { supabase } from '../lib/supabase';
+import { supabase, authRedirectTo } from '../lib/supabase';
 import { showAlert } from '../lib/platformAlert';
 import { Colors } from '../constants/colors';
 import { Radius, Shadow } from '../constants/theme';
@@ -62,7 +62,7 @@ export default function S02_SignUp({ navigation }: Props) {
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { emailRedirectTo: 'invit://auth/callback' },
+      options: { emailRedirectTo: authRedirectTo },
     });
 
     if (error) {

@@ -7,7 +7,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { supabase, authRedirectTo } from '../lib/supabase';
 import { loginRevenueCat, logoutRevenueCat } from '../lib/revenuecat';
 import { initPushNotifications } from '../lib/notifications';
 
@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: 'invit://auth/callback' },
+      options: { emailRedirectTo: authRedirectTo },
     });
     return { error };
   };
@@ -74,7 +74,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: authRedirectTo,
+    });
     return { error };
   };
 
